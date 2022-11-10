@@ -2,6 +2,8 @@ package hal
 
 import (
 	"fmt"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/pcap"
 	"net"
 	"os"
 	"qiao/config"
@@ -38,20 +40,21 @@ func isInNetInterfaces(netIf string) bool {
 
 func disableIpv6(netIf string) {
 	path := fmt.Sprintf("/proc/sys/net/ipv6/conf/%s/disable_ipv6", netIf)
-	f, err := os.OpenFile(path, os.O_CREATE, 0)
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
 	if err != nil {
 		panic(err)
 	}
-	n, err := f.Write([]byte{1})
+	n, err := f.Write([]byte{'1'})
 	if n != 1 || err != nil {
 		panic(fmt.Sprintf("n != 1 || err != nil, err: %+v", err))
 	}
+	fmt.Printf("disable %s interface ipv6\n", netIf)
 }
 
 func Init() {
 	once.Do(func() {
 		displayInterfaces()
-		ifNames := experimentInterfaces[host]
+		ifNames := experimentInterfaces[Host]
 		for i := range ifNames {
 			// if exist in net interfaces
 			if !isInNetInterfaces(ifNames[i]) {
@@ -60,6 +63,27 @@ func Init() {
 			if config.Experimental {
 				disableIpv6(ifNames[i])
 			}
+		}
+
+		if !config.Experimental {
+			ifs, err := net.Interfaces()
+			if err != nil {
+				panic(err)
+			}
+			for i := range ifs {
+				ifNames = append(ifNames, ifs[i].Name)
+			}
+		}
+
+		for i := range ifNames {
+			handle, err := pcap.OpenLive(ifNames[i], config.BufSize, true, pcap.BlockForever)
+			if err != nil {
+				panic(err)
+			}
+			IfHandles[ifNames[i]] = handle
+			packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+
+			fmt.Printf("hal: pcap capture on interface %+v", ifNames[i])
 		}
 	})
 }
