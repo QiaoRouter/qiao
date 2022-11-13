@@ -21,11 +21,13 @@ var experimentInterfaces = map[HostName]IfNames{
 }
 
 type IfHandle struct {
-	IfName        string
-	PcapHandle    *pcap.Handle
-	PacketSource  *gopacket.PacketSource
-	MAC           net.HardwareAddr
-	LinkLocalIPv6 net.IP
+	IfName          string
+	IfIndex         int
+	PcapHandle      *pcap.Handle
+	PacketSource    *gopacket.PacketSource
+	MAC             net.HardwareAddr
+	LinkLocalIPv6   net.IP
+	NeighborMacAddr net.HardwareAddr
 }
 
 var IfHandles []*IfHandle

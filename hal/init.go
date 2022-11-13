@@ -65,6 +65,19 @@ func macAddr(ifName string) net.HardwareAddr {
 	return nil
 }
 
+func ifIndex(ifName string) int {
+	netIfs, err := net.Interfaces()
+	if err != nil {
+		panic(err)
+	}
+	for i := range netIfs {
+		if netIfs[i].Name == ifName {
+			return netIfs[i].Index
+		}
+	}
+	return -1
+}
+
 func Init() {
 	once.Do(func() {
 		displayInterfaces()
@@ -101,6 +114,7 @@ func Init() {
 				PcapHandle:   handle,
 				PacketSource: gopacket.NewPacketSource(handle, handle.LinkType()),
 				MAC:          macAddr(ifNames[i]),
+				IfIndex:      ifIndex(ifNames[i]),
 			}
 			//
 			// Now we only support ipv6 over Ethernet,
@@ -114,9 +128,9 @@ func Init() {
 			ifHandle.LinkLocalIPv6 = ip
 
 			fmt.Printf("%+v mac is %+v\n", ifHandle.IfName, ifHandle.MAC)
+			fmt.Printf("%+v link-local addr is %+v\n", ifHandle.IfName, ifHandle.LinkLocalIPv6)
 			IfHandles = append(IfHandles, ifHandle)
 			fmt.Printf("hal: pcap capture on interface %+v\n", ifNames[i])
 		}
-
 	})
 }
