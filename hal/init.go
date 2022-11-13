@@ -25,21 +25,21 @@ func displayInterfaces() {
 	fmt.Println("---display interfaces end---")
 }
 
-func isInNetInterfaces(netIf string) bool {
+func isInNetInterfaces(ifName string) bool {
 	netIfs, err := net.Interfaces()
 	if err != nil {
 		panic(err)
 	}
 	for i := range netIfs {
-		if netIfs[i].Name == netIf {
+		if netIfs[i].Name == ifName {
 			return true
 		}
 	}
 	return false
 }
 
-func disableIpv6(netIf string) {
-	path := fmt.Sprintf("/proc/sys/net/ipv6/conf/%s/disable_ipv6", netIf)
+func disableIpv6(ifName string) {
+	path := fmt.Sprintf("/proc/sys/net/ipv6/conf/%s/disable_ipv6", ifName)
 	f, err := os.OpenFile(path, os.O_WRONLY, 0)
 	if err != nil {
 		panic(err)
@@ -48,7 +48,20 @@ func disableIpv6(netIf string) {
 	if n != 1 || err != nil {
 		panic(fmt.Sprintf("n != 1 || err != nil, err: %+v", err))
 	}
-	fmt.Printf("disable %s interface ipv6\n", netIf)
+	fmt.Printf("disable %s interface ipv6\n", ifName)
+}
+
+func macAddr(ifName string) net.HardwareAddr {
+	netIfs, err := net.Interfaces()
+	if err != nil {
+		panic(err)
+	}
+	for i := range netIfs {
+		if netIfs[i].Name == ifName {
+			return netIfs[i].HardwareAddr
+		}
+	}
+	return nil
 }
 
 func Init() {
@@ -78,12 +91,20 @@ func Init() {
 		for i := range ifNames {
 			handle, err := pcap.OpenLive(ifNames[i], config.BufSize, true, pcap.BlockForever)
 			if err != nil {
-				panic(err)
+				fmt.Printf("pcap.OpenLive %+v fail, err: %+v\n", ifNames[i], err)
+				continue
 			}
-			IfHandles[ifNames[i]] = handle
-			packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
-			fmt.Printf("hal: pcap capture on interface %+v", ifNames[i])
+			ifHandle := &IfHandle{
+				IfName:       ifNames[i],
+				PcapHandle:   handle,
+				PacketSource: gopacket.NewPacketSource(handle, handle.LinkType()),
+				MAC:          macAddr(ifNames[i]),
+			}
+			fmt.Printf("%+v mac is %+v\n", ifHandle.IfName, ifHandle.MAC)
+			IfHandles = append(IfHandles, ifHandle)
+			fmt.Printf("hal: pcap capture on interface %+v\n", ifNames[i])
 		}
+
 	})
 }
