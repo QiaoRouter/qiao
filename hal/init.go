@@ -102,6 +102,11 @@ func Init() {
 				PacketSource: gopacket.NewPacketSource(handle, handle.LinkType()),
 				MAC:          macAddr(ifNames[i]),
 			}
+			//
+			// Now we only support ipv6 over Ethernet,
+			// please refer rfc4291 and rfc2464 for more details
+			// about eui64 computing and link-local address of ipv6 over Ethernet.
+			//
 			ip, err := eui64.ParseMAC(net.ParseIP("fe80::"), ifHandle.MAC)
 			if err != nil {
 				fmt.Printf("eui64.ParseMAC %+v fail, err is %+v\n", ifHandle.MAC, err)
