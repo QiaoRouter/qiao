@@ -3,6 +3,7 @@ package hal
 import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
+
 	"net"
 )
 
@@ -20,10 +21,11 @@ var experimentInterfaces = map[HostName]IfNames{
 }
 
 type IfHandle struct {
-	IfName       string
-	PcapHandle   *pcap.Handle
-	PacketSource *gopacket.PacketSource
-	MAC          net.HardwareAddr
+	IfName        string
+	PcapHandle    *pcap.Handle
+	PacketSource  *gopacket.PacketSource
+	MAC           net.HardwareAddr
+	LinkLocalIPv6 net.IP
 }
 
 var IfHandles []*IfHandle

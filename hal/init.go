@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
+	"github.com/mdlayher/netx/eui64"
 	"net"
 	"os"
 	"qiao/config"
@@ -101,6 +102,12 @@ func Init() {
 				PacketSource: gopacket.NewPacketSource(handle, handle.LinkType()),
 				MAC:          macAddr(ifNames[i]),
 			}
+			ip, err := eui64.ParseMAC(net.ParseIP("fe80::"), ifHandle.MAC)
+			if err != nil {
+				fmt.Printf("eui64.ParseMAC %+v fail, err is %+v\n", ifHandle.MAC, err)
+			}
+			ifHandle.LinkLocalIPv6 = ip
+
 			fmt.Printf("%+v mac is %+v\n", ifHandle.IfName, ifHandle.MAC)
 			IfHandles = append(IfHandles, ifHandle)
 			fmt.Printf("hal: pcap capture on interface %+v\n", ifNames[i])
