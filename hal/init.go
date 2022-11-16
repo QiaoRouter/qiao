@@ -78,6 +78,23 @@ func ifIndex(ifName string) int {
 	return -1
 }
 
+func ipv6(ifName string) string {
+	netIfs, err := net.Interfaces()
+	if err != nil {
+		panic(err)
+	}
+	for i := range netIfs {
+		if netIfs[i].Name == ifName {
+			addrs, err := netIfs[i].Addrs()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("ipv6: %+v\n", addrs)
+		}
+	}
+	return ""
+}
+
 func Init() {
 	once.Do(func() {
 		displayInterfaces()
@@ -89,24 +106,26 @@ func Init() {
 		}
 		for i := range ifs {
 			ifNames = append(ifNames, ifs[i].Name)
-			if config.Experimental {
-				disableIpv6(ifNames[i])
-			}
 		}
 
 		for i := range ifNames {
-			handle, err := pcap.OpenLive(ifNames[i], config.BufSize, true, pcap.BlockForever)
+			handleIn, err := pcap.OpenLive(ifNames[i], config.BufSize, true, pcap.BlockForever)
+			if err != nil {
+				fmt.Printf("pcap.OpenLive %+v fail, err: %+v\n", ifNames[i], err)
+				continue
+			}
+			handleOut, err := pcap.OpenLive(ifNames[i], config.BufSize, false, pcap.BlockForever)
 			if err != nil {
 				fmt.Printf("pcap.OpenLive %+v fail, err: %+v\n", ifNames[i], err)
 				continue
 			}
 
 			ifHandle := &IfHandle{
-				IfName:       ifNames[i],
-				PcapHandle:   handle,
-				PacketSource: gopacket.NewPacketSource(handle, handle.LinkType()),
-				MAC:          macAddr(ifNames[i]),
-				IfIndex:      ifIndex(ifNames[i]),
+				IfName:        ifNames[i],
+				MAC:           macAddr(ifNames[i]),
+				IfIndex:       ifIndex(ifNames[i]),
+				PcapHandleIn:  handleIn,
+				PcapHandleOut: handleOut,
 			}
 			//
 			// Now we only support ipv6 over Ethernet,
@@ -115,14 +134,20 @@ func Init() {
 			//
 			ip, err := eui64.ParseMAC(net.ParseIP("fe80::"), ifHandle.MAC)
 			if err != nil {
-				fmt.Printf("eui64.ParseMAC %+v fail, err is %+v\n", ifHandle.MAC, err)
+				fmt.Printf("if %+v: eui64.ParseMAC %+v fail, err is %+v\n\n", ifHandle.IfName,
+					ifHandle.MAC, err)
+				continue
 			}
+			ipv6(ifNames[i])
 			ifHandle.LinkLocalIPv6 = ip
-
+			ifHandle.PacketSource = gopacket.NewPacketSource(handleIn, handleIn.LinkType())
+			if config.Experimental {
+				disableIpv6(ifNames[i])
+			}
 			fmt.Printf("%+v mac is %+v\n", ifHandle.IfName, ifHandle.MAC)
 			fmt.Printf("%+v link-local addr is %+v\n", ifHandle.IfName, ifHandle.LinkLocalIPv6)
 			IfHandles = append(IfHandles, ifHandle)
-			fmt.Printf("hal: pcap capture on interface %+v\n", ifNames[i])
+			fmt.Printf("hal: pcap capture on interface %+v\n\n", ifNames[i])
 		}
 	})
 }

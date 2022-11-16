@@ -7,3 +7,8 @@ import (
 func TestInit(t *testing.T) {
 	Init()
 }
+
+func TestIfHandle_GetNeighborMacAddr(t *testing.T) {
+	Init()
+	IfHandles[0].GetNeighborMacAddr()
+}

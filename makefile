@@ -4,7 +4,7 @@ build:
 	go build
 
 run:
-	go build && ./qiao
+	python3 typo.py
 
-test-hal:
+test:
 	cd hal && go test

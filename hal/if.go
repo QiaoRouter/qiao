@@ -13,7 +13,8 @@ type IfNames []string
 type IfHandle struct {
 	IfName          string
 	IfIndex         int
-	PcapHandle      *pcap.Handle
+	PcapHandleIn    *pcap.Handle
+	PcapHandleOut   *pcap.Handle
 	PacketSource    *gopacket.PacketSource
 	MAC             net.HardwareAddr
 	LinkLocalIPv6   net.IP
