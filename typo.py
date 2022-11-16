@@ -47,7 +47,8 @@ if __name__ == '__main__':
 
     net['r2'].cmd('ethtool -K r2-eth0 tx off')
     net['r2'].cmd('ethtool -K r2-eth1 tx off')
-    net['r2'].cmd('sysctl -w net.ipv6.conf.all.forwarding=1')
+    net['r3'].cmd('sysctl -w net.ipv6.conf.all.forwarding=1')
+
 
     net['r3'].cmd('sysctl -w net.ipv6.conf.all.forwarding=1')
     net['r3'].cmd('ethtool -K r3-eth0 tx off')

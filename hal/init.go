@@ -6,8 +6,10 @@ import (
 	"github.com/google/gopacket/pcap"
 	"github.com/mdlayher/netx/eui64"
 	"net"
+	"net/netip"
 	"os"
 	"qiao/config"
+	"strings"
 	"sync"
 )
 
@@ -78,7 +80,13 @@ func ifIndex(ifName string) int {
 	return -1
 }
 
-func ipv6(ifName string) string {
+func prefix(ipv6 string) string {
+	ss := strings.Split(ipv6, "/")
+	return ss[0]
+}
+
+func ipv6(ifName string) []netip.Addr {
+	var ipv6Addr []netip.Addr
 	netIfs, err := net.Interfaces()
 	if err != nil {
 		panic(err)
@@ -89,10 +97,19 @@ func ipv6(ifName string) string {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("ipv6: %+v\n", addrs)
+			for _, addr := range addrs {
+				ip, err := netip.ParseAddr(prefix(addr.String()))
+				if err != nil {
+					continue
+				}
+				if ip.Is6() {
+					ipv6Addr = append(ipv6Addr, ip)
+				}
+			}
+			return ipv6Addr
 		}
 	}
-	return ""
+	return nil
 }
 
 func Init() {
@@ -138,8 +155,12 @@ func Init() {
 					ifHandle.MAC, err)
 				continue
 			}
-			ipv6(ifNames[i])
-			ifHandle.LinkLocalIPv6 = ip
+			ifHandle.IPv6 = ipv6(ifNames[i])
+			fmt.Printf("%+v ipv6 addrs are %+v\n", ifHandle.IfName, ifHandle.IPv6)
+			ifHandle.LinkLocalIPv6, err = netip.ParseAddr(ip.String())
+			if err != nil {
+				panic(err)
+			}
 			ifHandle.PacketSource = gopacket.NewPacketSource(handleIn, handleIn.LinkType())
 			if config.Experimental {
 				disableIpv6(ifNames[i])
