@@ -81,24 +81,16 @@ func ifIndex(ifName string) int {
 func Init() {
 	once.Do(func() {
 		displayInterfaces()
-		ifNames := experimentInterfaces[Host]
-		for i := range ifNames {
-			// if exist in net interfaces
-			if !isInNetInterfaces(ifNames[i]) {
-				continue
-			}
+		ifNames := make([]string, 0)
+
+		ifs, err := net.Interfaces()
+		if err != nil {
+			panic(err)
+		}
+		for i := range ifs {
+			ifNames = append(ifNames, ifs[i].Name)
 			if config.Experimental {
 				disableIpv6(ifNames[i])
-			}
-		}
-
-		if !config.Experimental {
-			ifs, err := net.Interfaces()
-			if err != nil {
-				panic(err)
-			}
-			for i := range ifs {
-				ifNames = append(ifNames, ifs[i].Name)
 			}
 		}
 
