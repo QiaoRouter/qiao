@@ -35,9 +35,18 @@ func (etherAddr *EthernetAddr) Serialize() Buffer {
 func (etherAddr *EthernetAddr) NetHardwareAddr() net.HardwareAddr {
 	mac := net.HardwareAddr{}
 	for i := 0; i < len(etherAddr.Octet); i++ {
-		mac[i] = etherAddr.Octet[i]
+		mac = append(mac, etherAddr.Octet[i])
 	}
 	return mac
+}
+
+func (etherAddr *EthernetAddr) AllZero() bool {
+	for i := 0; i < len(etherAddr.Octet); i++ {
+		if etherAddr.Octet[i] != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 type EthernetHeader struct {
@@ -55,6 +64,11 @@ func (ether *EthernetHeader) String() string {
 	return ""
 }
 
-func (frame *EthernetFrame) Serialize() []byte {
-	return []byte{}
+func (ether *EthernetFrame) Serialize() []byte {
+	var ret []byte
+	ret = concatMac(ret, &ether.Header.DstHost)
+	ret = concatMac(ret, &ether.Header.SrcHost)
+	ret = concatU16(ret, uint16(ether.Header.Type))
+	ret = append(ret, ether.Payload.Octet...)
+	return ret
 }

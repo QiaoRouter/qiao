@@ -1,9 +1,10 @@
 package protocol
 
 const (
-	EthernetAddrLen = 6  /* in unit of 1 octet */
-	IPv6AddrLen     = 16 /* in unit of 1 octet */
-	IPv6Version     = 6 << 4
+	EthernetAddrLen   = 6  /* in unit of 1 octet */
+	IPv6AddrLen       = 16 /* in unit of 1 octet */
+	IPv6Version       = 6 << 4
+	EthernetHeaderLen = 14
 )
 
 type EthernetType uint16
@@ -18,5 +19,13 @@ const (
 )
 
 const (
-	IPProtocolICMPV6 = 56
+	IPProtocolICMPV6 = uint8(56)
 )
+
+const (
+	EthernetProtocolIPv6 = EthernetType(0x86DD)
+)
+
+func TODO() {
+	panic("TODO")
+}

@@ -99,6 +99,7 @@ func ipv6(ifName string) []protocol.Ipv6Addr {
 	for i := range netIfs {
 		if netIfs[i].Name == ifName {
 			addrs, err := netIfs[i].Addrs()
+			fmt.Printf("看我！len(addrs) is %d\n", len(addrs))
 			if err != nil {
 				panic(err)
 			}
@@ -153,6 +154,9 @@ func Init() {
 				PcapHandleIn:  handleIn,
 				PcapHandleOut: handleOut,
 			}
+			if ifHandle.MAC.AllZero() {
+				continue
+			}
 			//
 			// Now we only support ipv6 over Ethernet,
 			// please refer rfc4291 and rfc2464 for more details
@@ -171,9 +175,9 @@ func Init() {
 				panic(err)
 			}
 			ifHandle.PacketSource = gopacket.NewPacketSource(handleIn, handleIn.LinkType())
-			if config.Experimental {
-				disableIpv6(ifNames[i])
-			}
+			//if config.Experimental {
+			//	disableIpv6(ifNames[i])
+			//}
 			fmt.Printf("%+v mac is %+v\n", ifHandle.IfName, ifHandle.MAC)
 			fmt.Printf("%+v link-local addr is %+v\n", ifHandle.IfName, ifHandle.LinkLocalIPv6)
 			IfHandles = append(IfHandles, ifHandle)

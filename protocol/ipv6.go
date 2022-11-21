@@ -28,7 +28,7 @@ type Ipv6Header struct {
 	TrafficClass int      // traffic class
 	FlowLabel    int      // flow label
 	PayloadLen   int      // payload length
-	NextHeader   int      // next header
+	NextHeader   uint8    // next header
 	HopLimit     int      // hop limit
 	Src          Ipv6Addr // source address
 	Dst          Ipv6Addr // destination address
@@ -63,5 +63,16 @@ func (addr *Ipv6Addr) MulticastMac() EthernetAddr {
 }
 
 func (dgrm *Ipv6Datagram) ToEthernetFrame(srcMac EthernetAddr, dstMac EthernetAddr) *EthernetFrame {
-	return nil
+	return &EthernetFrame{
+		Header: EthernetHeader{
+			DstHost: dstMac,
+			SrcHost: srcMac,
+			Type:    EthernetProtocolIPv6,
+		},
+		Payload: dgrm.Serialize(),
+	}
+}
+
+func (dgrm *Ipv6Datagram) Serialize() Buffer {
+	return Buffer{}
 }

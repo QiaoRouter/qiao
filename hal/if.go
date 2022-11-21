@@ -20,7 +20,7 @@ type IfHandle struct {
 	MAC             protocol.EthernetAddr
 	LinkLocalIPv6   protocol.Ipv6Addr
 	NeighborMacAddr net.HardwareAddr
-	IPv6            protocol.Ipv6Addr
+	IPv6            []protocol.Ipv6Addr
 }
 
 var IfHandles []*IfHandle
