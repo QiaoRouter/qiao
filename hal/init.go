@@ -9,6 +9,7 @@ import (
 	"net/netip"
 	"os"
 	"qiao/config"
+	"qiao/protocol"
 	"strings"
 	"sync"
 )
@@ -54,17 +55,21 @@ func disableIpv6(ifName string) {
 	fmt.Printf("disable %s interface ipv6\n", ifName)
 }
 
-func macAddr(ifName string) net.HardwareAddr {
+func macAddr(ifName string) protocol.EthernetAddr {
 	netIfs, err := net.Interfaces()
 	if err != nil {
 		panic(err)
 	}
 	for i := range netIfs {
 		if netIfs[i].Name == ifName {
-			return netIfs[i].HardwareAddr
+			mac, err := protocol.ParseMac(netIfs[i].HardwareAddr.String())
+			if err != nil {
+				return protocol.EthernetAddr{}
+			}
+			return mac
 		}
 	}
-	return nil
+	return protocol.EthernetAddr{}
 }
 
 func ifIndex(ifName string) int {
@@ -85,8 +90,8 @@ func prefix(ipv6 string) string {
 	return ss[0]
 }
 
-func ipv6(ifName string) []netip.Addr {
-	var ipv6Addr []netip.Addr
+func ipv6(ifName string) []protocol.Ipv6Addr {
+	var ipv6Addr []protocol.Ipv6Addr
 	netIfs, err := net.Interfaces()
 	if err != nil {
 		panic(err)
@@ -103,7 +108,11 @@ func ipv6(ifName string) []netip.Addr {
 					continue
 				}
 				if ip.Is6() {
-					ipv6Addr = append(ipv6Addr, ip)
+					in6, err := protocol.ParseIpv6(ip.String())
+					if err != nil {
+						continue
+					}
+					ipv6Addr = append(ipv6Addr, in6)
 				}
 			}
 			return ipv6Addr
@@ -149,15 +158,15 @@ func Init() {
 			// please refer rfc4291 and rfc2464 for more details
 			// about eui64 computing and link-local address of ipv6 over Ethernet.
 			//
-			ip, err := eui64.ParseMAC(net.ParseIP("fe80::"), ifHandle.MAC)
+			ip, err := eui64.ParseMAC(net.ParseIP("fe80::"), ifHandle.MAC.NetHardwareAddr())
 			if err != nil {
 				fmt.Printf("if %+v: eui64.ParseMAC %+v fail, err is %+v\n\n", ifHandle.IfName,
-					ifHandle.MAC, err)
+					ifHandle.MAC.String(), err)
 				continue
 			}
 			ifHandle.IPv6 = ipv6(ifNames[i])
 			fmt.Printf("%+v ipv6 addrs are %+v\n", ifHandle.IfName, ifHandle.IPv6)
-			ifHandle.LinkLocalIPv6, err = netip.ParseAddr(ip.String())
+			ifHandle.LinkLocalIPv6, err = protocol.ParseIpv6(ip.String())
 			if err != nil {
 				panic(err)
 			}

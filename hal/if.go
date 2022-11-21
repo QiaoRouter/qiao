@@ -3,7 +3,7 @@ package hal
 import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
-	"net/netip"
+	"qiao/protocol"
 
 	"net"
 )
@@ -17,10 +17,10 @@ type IfHandle struct {
 	PcapHandleIn    *pcap.Handle
 	PcapHandleOut   *pcap.Handle
 	PacketSource    *gopacket.PacketSource
-	MAC             net.HardwareAddr
-	LinkLocalIPv6   netip.Addr
+	MAC             protocol.EthernetAddr
+	LinkLocalIPv6   protocol.Ipv6Addr
 	NeighborMacAddr net.HardwareAddr
-	IPv6            []netip.Addr
+	IPv6            protocol.Ipv6Addr
 }
 
 var IfHandles []*IfHandle

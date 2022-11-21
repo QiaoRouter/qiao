@@ -2,33 +2,34 @@ package hal
 
 import (
 	"fmt"
-	"github.com/mdlayher/ndp"
 	"net"
-	"net/netip"
+	"qiao/protocol"
+	"sync"
+	"time"
 )
 
+var NdpTable struct {
+	sync.Mutex
+	m map[protocol.Ipv6Addr]NDPRecord
+}
+
+type NDPRecord struct {
+	Mac        protocol.EthernetAddr
+	ExpireTime time.Time
+}
+
 func (h *IfHandle) GetNeighborMacAddr() (net.HardwareAddr, error) {
-	target, err := netip.ParseAddr(h.LinkLocalIPv6.String())
-	if err != nil {
-		panic(err)
-	}
-	snm, err := ndp.SolicitedNodeMulticast(target)
-	if err != nil {
-		panic(err)
-	}
+	target := h.LinkLocalIPv6
+	snm := target.SolicitedNodeMulticast()
 	fmt.Printf("if_%+v link-local ip is %+v, snm is %+v\n",
-		h.IfName, h.LinkLocalIPv6, snm)
-	p, err := h.PacketSource.NextPacket()
-	if err != nil {
-		panic(err)
-	}
+		h.IfName, target.String(), snm.String())
 
-	fmt.Printf("收到一个数据包， 原封不动发回去, p: %+v\n",
-		p.String())
-	err = h.PcapHandleOut.WritePacketData(p.Data())
-	if err != nil {
-		panic(err)
-	}
-
+	icmp_ns := protocol.MakeICMPv6NeighborSolicitation(target, h.MAC)
+	ipv6_datagram := icmp_ns.ToIpv6Datagram(h.IPv6, snm)
+	ether := ipv6_datagram.ToEthernetFrame(h.MAC, snm.MulticastMac())
+	fmt.Printf("icmp_ns: %+v\n", icmp_ns)
+	fmt.Printf("ipv6_datagram: %+v\n", ipv6_datagram)
+	fmt.Printf("ether: %+v\n", ether)
+	h.PcapHandleOut.WritePacketData(ether.Serialize())
 	return nil, nil
 }
