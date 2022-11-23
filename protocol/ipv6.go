@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"fmt"
 	"github.com/mdlayher/ndp"
 	"net/netip"
 )
@@ -24,12 +25,12 @@ func ParseIpv6(s string) (Ipv6Addr, error) {
 }
 
 type Ipv6Header struct {
-	Version      int      // protocol version
-	TrafficClass int      // traffic class
-	FlowLabel    int      // flow label
-	PayloadLen   int      // payload length
+	Version      uint8    // protocol version
+	TrafficClass uint8    // traffic class
+	FlowLabel    uint32   // flow label
+	PayloadLen   uint16   // payload length
 	NextHeader   uint8    // next header
-	HopLimit     int      // hop limit
+	HopLimit     uint8    // hop limit
 	Src          Ipv6Addr // source address
 	Dst          Ipv6Addr // destination address
 }
@@ -63,6 +64,8 @@ func (addr *Ipv6Addr) MulticastMac() EthernetAddr {
 }
 
 func (dgrm *Ipv6Datagram) ToEthernetFrame(srcMac EthernetAddr, dstMac EthernetAddr) *EthernetFrame {
+	dgrm.FillChecksum()
+
 	return &EthernetFrame{
 		Header: EthernetHeader{
 			DstHost: dstMac,
@@ -73,6 +76,52 @@ func (dgrm *Ipv6Datagram) ToEthernetFrame(srcMac EthernetAddr, dstMac EthernetAd
 	}
 }
 
+func (header *Ipv6Header) Serialize() Buffer {
+	var s []byte
+	ctrl := uint32(0)
+	if header.Version == 6 {
+		ctrl += uint32(IPv6Version) << 24
+	} else {
+		panic("not ipv6")
+	}
+
+	ctrl += uint32(header.TrafficClass) << 20
+	ctrl += header.FlowLabel
+	s = concatU32(s, ctrl)
+
+	s = concatU16(s, header.PayloadLen)
+	s = concatU8(s, header.NextHeader)
+	s = concatU8(s, header.HopLimit)
+	s = concatIpv6Addr(s, &header.Src)
+	s = concatIpv6Addr(s, &header.Dst)
+	return Buffer{
+		Octet: s,
+	}
+}
+
+func (addr *Ipv6Addr) Serialize() Buffer {
+	s := make([]byte, 16)
+	for i := 0; i < len(addr.Octet); i++ {
+		s[i] = addr.Octet[i]
+	}
+	return Buffer{
+		Octet: s,
+	}
+}
+
 func (dgrm *Ipv6Datagram) Serialize() Buffer {
-	return Buffer{}
+	var s []byte
+	s = concatBuffer(s, dgrm.Header.Serialize())
+	s = concatBuffer(s, dgrm.Payload)
+	return Buffer{
+		Octet: s,
+	}
+}
+
+func (dgrm *Ipv6Datagram) String() string {
+	s := ""
+	s += fmt.Sprintf("header: %+v, ", dgrm.Header)
+	s += fmt.Sprintf("src: %+v, ", dgrm.Header.Src.String())
+	s += fmt.Sprintf("dst: %+v, ", dgrm.Header.Dst.String())
+	return s
 }

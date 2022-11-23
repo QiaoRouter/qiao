@@ -11,7 +11,7 @@ func TestInit(t *testing.T) {
 
 func TestIfHandle_GetNeighborMacAddr(t *testing.T) {
 	Init()
-	IfHandles[0].GetNeighborMacAddr()
+
 }
 
 func TestIpv6(t *testing.T) {

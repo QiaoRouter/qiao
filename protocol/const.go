@@ -3,7 +3,7 @@ package protocol
 const (
 	EthernetAddrLen   = 6  /* in unit of 1 octet */
 	IPv6AddrLen       = 16 /* in unit of 1 octet */
-	IPv6Version       = 6 << 4
+	IPv6Version       = uint8(6 << 4)
 	EthernetHeaderLen = 14
 )
 
@@ -19,7 +19,7 @@ const (
 )
 
 const (
-	IPProtocolICMPV6 = uint8(56)
+	IPProtocolICMPV6 = uint8(58)
 )
 
 const (

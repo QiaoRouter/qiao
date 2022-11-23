@@ -13,6 +13,16 @@ type ICMPv6NeighborSolicitationOption struct {
 	Payload Buffer
 }
 
+func (opt *ICMPv6NeighborSolicitationOption) Serialize() Buffer {
+	var s []byte
+	s = concatU8(s, uint8(opt.Type))
+	s = concatU8(s, opt.Len)
+	s = concatBuffer(s, opt.Payload)
+	return Buffer{
+		Octet: s,
+	}
+}
+
 type ICMPv6NeighborSolicitation struct {
 	Header     ICMPv6Header
 	TargetAddr Ipv6Addr
@@ -20,10 +30,18 @@ type ICMPv6NeighborSolicitation struct {
 }
 
 func (icmp *ICMPv6NeighborSolicitation) Serialize() Buffer {
-	payload := []byte{}
+	var s []byte
+	s = concatU8(s, uint8(icmp.Header.Type))
+	s = concatU8(s, icmp.Header.Code)
+	s = concatU16(s, 0)
+	s = concatU32(s, icmp.Header.RestOfHeader)
+	s = concatBuffer(s, icmp.TargetAddr.Serialize())
+	for i := 0; i < len(icmp.Options); i++ {
+		s = concatBuffer(s, icmp.Options[i].Serialize())
+	}
 
 	return Buffer{
-		Octet: payload,
+		Octet: s,
 	}
 }
 
