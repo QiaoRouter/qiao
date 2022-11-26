@@ -20,6 +20,7 @@ const (
 
 const (
 	IPProtocolICMPV6 = uint8(58)
+	IPProtocolUdp    = uint8(17)
 )
 
 const (

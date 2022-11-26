@@ -1,6 +1,9 @@
 package protocol
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 type Checksum32 struct {
 	Val uint32
@@ -40,17 +43,21 @@ func (check *Checksum32) U16() uint16 {
 
 func (dgrm *Ipv6Datagram) FillChecksum() {
 	checksum := Checksum32{}
-
+	checksum.AddBuffer(dgrm.Header.Src.Serialize())
+	checksum.AddBuffer(dgrm.Header.Dst.Serialize())
+	checksum.AddU16(dgrm.Header.PayloadLen)
+	checksum.AddU8(dgrm.Header.NextHeader)
+	checksum.AddBuffer(dgrm.Payload)
+	u16 := 0xffff - checksum.U16()
 	if dgrm.Header.NextHeader == IPProtocolICMPV6 {
-		checksum.AddBuffer(dgrm.Header.Src.Serialize())
-		checksum.AddBuffer(dgrm.Header.Dst.Serialize())
-		checksum.AddU16(dgrm.Header.PayloadLen)
-		checksum.AddU8(dgrm.Header.NextHeader)
-		checksum.AddBuffer(dgrm.Payload)
-
-		u16 := 0xffff - checksum.U16()
-		if u16 != 0 {
-			binary.BigEndian.PutUint16(dgrm.Payload.Octet[2:4], u16)
+		binary.BigEndian.PutUint16(dgrm.Payload.Octet[2:4], u16)
+	}
+	if dgrm.Header.NextHeader == IPProtocolUdp {
+		fmt.Printf("next header is udp\n")
+		if u16 == 0 {
+			u16 = 0xffff
 		}
+		fmt.Printf("u16: %d\n", u16)
+		binary.BigEndian.PutUint16(dgrm.Payload.Octet[6:8], u16)
 	}
 }

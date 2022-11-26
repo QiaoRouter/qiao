@@ -87,13 +87,13 @@ func (header *Ipv6Header) Serialize() Buffer {
 
 	ctrl += uint32(header.TrafficClass) << 20
 	ctrl += header.FlowLabel
-	s = concatU32(s, ctrl)
+	s = ConcatU32(s, ctrl)
 
-	s = concatU16(s, header.PayloadLen)
-	s = concatU8(s, header.NextHeader)
-	s = concatU8(s, header.HopLimit)
-	s = concatIpv6Addr(s, &header.Src)
-	s = concatIpv6Addr(s, &header.Dst)
+	s = ConcatU16(s, header.PayloadLen)
+	s = ConcatU8(s, header.NextHeader)
+	s = ConcatU8(s, header.HopLimit)
+	s = ConcatIpv6Addr(s, &header.Src)
+	s = ConcatIpv6Addr(s, &header.Dst)
 	return Buffer{
 		Octet: s,
 	}
@@ -111,8 +111,8 @@ func (addr *Ipv6Addr) Serialize() Buffer {
 
 func (dgrm *Ipv6Datagram) Serialize() Buffer {
 	var s []byte
-	s = concatBuffer(s, dgrm.Header.Serialize())
-	s = concatBuffer(s, dgrm.Payload)
+	s = ConcatBuffer(s, dgrm.Header.Serialize())
+	s = ConcatBuffer(s, dgrm.Payload)
 	return Buffer{
 		Octet: s,
 	}

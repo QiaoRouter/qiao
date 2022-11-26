@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"qiao/hal"
+	"qiao/ripng"
 )
 
 func main() {
-	hal.Init()
-	fmt.Printf("we have %d if_handles\n", len(hal.IfHandles))
+	e := ripng.MakeRipngEngine()
+	_ = e.Run()
 }

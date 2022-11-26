@@ -66,9 +66,9 @@ func (ether *EthernetHeader) String() string {
 
 func (ether *EthernetFrame) Serialize() []byte {
 	var ret []byte
-	ret = concatMac(ret, &ether.Header.DstHost)
-	ret = concatMac(ret, &ether.Header.SrcHost)
-	ret = concatU16(ret, uint16(ether.Header.Type))
-	ret = concatBuffer(ret, ether.Payload)
+	ret = ConcatMac(ret, &ether.Header.DstHost)
+	ret = ConcatMac(ret, &ether.Header.SrcHost)
+	ret = ConcatU16(ret, uint16(ether.Header.Type))
+	ret = ConcatBuffer(ret, ether.Payload)
 	return ret
 }
