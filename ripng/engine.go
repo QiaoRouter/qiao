@@ -22,7 +22,7 @@ func (e *Engine) Run() error {
 		h := hal.IfHandles[i]
 		fmt.Printf("ipv6: %+v\n", h.IPv6)
 		e := &RouteTableEntry{
-			Ipv6Addr: h.IPv6,
+			Ipv6Addr: h.IPv6.ToRouteAddr(h.IPv6Mask),
 			Len:      h.IPv6Mask,
 			IfIndex:  h.IfIndex,
 			Nexthop:  protocol.Ipv6Addr{}, // all zero, link-local route
@@ -35,6 +35,9 @@ func (e *Engine) Run() error {
 		}
 	}
 	go e.ticker()
+	for _, h := range hal.IfHandles {
+		go e.receivePacketAndHandleIt(h)
+	}
 	for true {
 
 	}

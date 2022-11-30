@@ -1,7 +1,6 @@
 package ripng
 
 import (
-	"fmt"
 	"qiao/hal"
 	"qiao/protocol"
 )
@@ -15,13 +14,13 @@ const (
 func (e *Engine) broadcast() {
 	ifHandles := hal.IfHandles
 	for i := 0; i < len(ifHandles); i++ {
-		e.sendRipngs(i, ifHandles[i].IPv6)
+		ipv6Dst, _ := protocol.ParseIpv6("ff02::9")
+		e.sendRipngs(i, ipv6Dst)
 	}
 }
 
 func (e *Engine) sendRipngs(ifhIdx int, ipv6Dst protocol.Ipv6Addr) {
 	h := hal.IfHandles[ifhIdx]
-	fmt.Printf("%v sendRipngs\n", h.IfName)
 	macDst := ipv6Dst.MulticastMac()
 	rtes := LookUpTable.rteList
 
@@ -34,7 +33,6 @@ func (e *Engine) sendRipngs(ifhIdx int, ipv6Dst protocol.Ipv6Addr) {
 		} else {
 			hi = len(rtes)
 		}
-		fmt.Printf("lo: %d, hi: %d\n", lo, hi)
 		ripngPacket.NumEntries = uint32(hi - lo)
 		ripngPacket.Command = RipngTypeResponse
 		for j := lo; j < hi; j++ {
@@ -44,5 +42,6 @@ func (e *Engine) sendRipngs(ifhIdx int, ipv6Dst protocol.Ipv6Addr) {
 		ipv6Dgrm := ripngPacket.ToIpv6UdpPacket(h.LinkLocalIPv6, ipv6Dst)
 
 		go h.SendIpv6(ipv6Dgrm, macDst)
+
 	}
 }

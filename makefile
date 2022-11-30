@@ -13,5 +13,5 @@ test:
 run-r1:
 	bird6 -c ./setup/ripng/netns/v1/bird-r1.conf -d -s ~/bird-r1.ctl
 
-run-r2:
+run-r3:
 	bird6 -c ./setup/ripng/netns/v1/bird-r3.conf -d -s ~/bird-r3.ctl

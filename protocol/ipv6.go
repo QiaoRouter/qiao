@@ -125,3 +125,86 @@ func (dgrm *Ipv6Datagram) String() string {
 	s += fmt.Sprintf("dst: %+v, ", dgrm.Header.Dst.String())
 	return s
 }
+
+func (dgrm *Ipv6Datagram) ChecksumValid() bool {
+	checksum := Checksum32{}
+	checksum.AddBuffer(dgrm.Header.Src.Serialize())
+	checksum.AddBuffer(dgrm.Header.Dst.Serialize())
+	checksum.AddU16(dgrm.Header.PayloadLen)
+	checksum.AddU8(dgrm.Header.NextHeader)
+	checksum.AddBuffer(dgrm.Payload)
+	return checksum.U16() == 0xffff
+}
+
+func LenToMaskAddr(maskLen int) Ipv6Addr {
+	ret := Ipv6Addr{}
+	if maskLen < 0 || maskLen > 128 {
+		return ret
+	}
+	idx := 0
+	for maskLen >= 8 {
+		ret.Octet[idx] = 0xff
+		maskLen -= 8
+		idx++
+	}
+	if maskLen > 0 {
+		x := byte(0b10000000)
+		for i := 0; i < maskLen; i++ {
+			ret.Octet[idx] += x >> idx
+		}
+	}
+	return ret
+}
+
+func (addr *Ipv6Addr) ToRouteAddr(mask int) Ipv6Addr {
+	ret := Ipv6Addr{}
+	maskAddr := LenToMaskAddr(mask)
+	for i := 0; i < len(addr.Octet); i++ {
+		ret.Octet[i] = addr.Octet[i] & maskAddr.Octet[i]
+	}
+	return ret
+}
+
+func ParseIpv6Datagram(buf Buffer) (*Ipv6Datagram, error) {
+	parser := NetParser{
+		Buffer:  buf,
+		Pointer: 0,
+	}
+	dgrm := &Ipv6Datagram{}
+	ctrl, err := parser.ParseU32()
+	if err != nil {
+		return nil, err
+	}
+	if uint8(ctrl>>28) == 6 {
+		dgrm.Header.Version = 6
+	} else {
+		return nil, ParseErr
+	}
+	dgrm.Header.TrafficClass = uint8((ctrl >> 20) & 0xff)
+	dgrm.Header.FlowLabel = ctrl & 0xfffff
+	dgrm.Header.PayloadLen, err = parser.ParseU16()
+	if err != nil {
+		return nil, err
+	}
+	dgrm.Header.NextHeader, err = parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+	dgrm.Header.HopLimit, err = parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+	dgrm.Header.Src, err = parser.ParseIpv6Addr()
+	if err != nil {
+		return nil, err
+	}
+	dgrm.Header.Dst, err = parser.ParseIpv6Addr()
+	if err != nil {
+		return nil, err
+	}
+	dgrm.Payload, err = parser.ParseBuffer()
+	if err != nil {
+		return nil, err
+	}
+	return dgrm, nil
+}

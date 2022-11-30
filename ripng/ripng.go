@@ -83,6 +83,7 @@ func (packet *RipngPacket) ToIpv6UdpPacket(src protocol.Ipv6Addr,
 		Header: protocol.Ipv6Header{
 			Version:    6,
 			PayloadLen: payload.Length(),
+			FlowLabel:  0,
 			NextHeader: protocol.IPProtocolUdp,
 			HopLimit:   255,
 			Src:        src,

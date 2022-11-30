@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 type Checksum32 struct {
@@ -53,11 +52,9 @@ func (dgrm *Ipv6Datagram) FillChecksum() {
 		binary.BigEndian.PutUint16(dgrm.Payload.Octet[2:4], u16)
 	}
 	if dgrm.Header.NextHeader == IPProtocolUdp {
-		fmt.Printf("next header is udp\n")
 		if u16 == 0 {
 			u16 = 0xffff
 		}
-		fmt.Printf("u16: %d\n", u16)
 		binary.BigEndian.PutUint16(dgrm.Payload.Octet[6:8], u16)
 	}
 }
