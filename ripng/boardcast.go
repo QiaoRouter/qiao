@@ -19,8 +19,8 @@ func (e *Engine) broadcast() {
 	}
 }
 
-func (e *Engine) sendRipngs(ifhIdx int, ipv6Dst protocol.Ipv6Addr) {
-	h := hal.IfHandles[ifhIdx]
+func (e *Engine) sendRipngs(handleIdx int, ipv6Dst protocol.Ipv6Addr) {
+	h := hal.IfHandles[handleIdx]
 	macDst := ipv6Dst.MulticastMac()
 	rtes := LookUpTable.rteList
 
@@ -37,11 +37,10 @@ func (e *Engine) sendRipngs(ifhIdx int, ipv6Dst protocol.Ipv6Addr) {
 		ripngPacket.Command = RipngTypeResponse
 		for j := lo; j < hi; j++ {
 			ripngPacket.Entries = append(ripngPacket.Entries,
-				rtes[j].ToRipngEntry(ipv6Dst))
+				rtes[j].ToRipngEntry(h.IfIndex))
 		}
 		ipv6Dgrm := ripngPacket.ToIpv6UdpPacket(h.LinkLocalIPv6, ipv6Dst)
 
 		go h.SendIpv6(ipv6Dgrm, macDst)
-
 	}
 }

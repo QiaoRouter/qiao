@@ -165,6 +165,15 @@ func (addr *Ipv6Addr) ToRouteAddr(mask int) Ipv6Addr {
 	return ret
 }
 
+func (addr *Ipv6Addr) Equals(ipv6 Ipv6Addr) bool {
+	for i := 0; i < IPv6AddrLen; i++ {
+		if addr.Octet[i] != ipv6.Octet[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func ParseIpv6Datagram(buf Buffer) (*Ipv6Datagram, error) {
 	parser := NetParser{
 		Buffer:  buf,

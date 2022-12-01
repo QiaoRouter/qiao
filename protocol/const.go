@@ -5,11 +5,18 @@ const (
 	IPv6AddrLen       = 16 /* in unit of 1 octet */
 	IPv6Version       = uint8(6 << 4)
 	EthernetHeaderLen = 14
+	Ipv6HeaderLen     = 40
 )
 
 type EthernetType uint16
 
 type ICMPv6Type uint8
+
+const (
+	ICMPv6TypeNeighborSolicitation = ICMPv6Type(135)
+	ICMPv6TypeEchoRequest          = ICMPv6Type(128)
+	ICMPv6TypeEchoReply            = ICMPv6Type(129)
+)
 
 type NDOptionType uint8
 

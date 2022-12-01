@@ -24,3 +24,33 @@ func (udp *UdpPacket) Serialize() Buffer {
 		Octet: s,
 	}
 }
+
+func ParseUdp(buf Buffer) (*UdpPacket, error) {
+	var err error
+	parser := NetParser{
+		Buffer:  buf,
+		Pointer: 0,
+	}
+	udp := &UdpPacket{}
+	udp.SrcPort, err = parser.ParseU16()
+	if err != nil {
+		return nil, err
+	}
+	udp.DstPort, err = parser.ParseU16()
+	if err != nil {
+		return nil, err
+	}
+	udp.Len, err = parser.ParseU16()
+	if err != nil {
+		return nil, err
+	}
+	udp.Checksum, err = parser.ParseU16()
+	if err != nil {
+		return nil, err
+	}
+	udp.Payload, err = parser.ParseBuffer()
+	if err != nil {
+		return nil, err
+	}
+	return udp, nil
+}

@@ -49,7 +49,7 @@ func MakeICMPv6NeighborSolicitation(linkLocalIpv6 Ipv6Addr,
 	mac EthernetAddr) *ICMPv6NeighborSolicitation {
 	icmp_ns := &ICMPv6NeighborSolicitation{
 		Header: ICMPv6Header{
-			Type:         135,
+			Type:         ICMPv6TypeNeighborSolicitation,
 			Code:         0,
 			RestOfHeader: 0,
 		},
@@ -79,4 +79,50 @@ func (icmp *ICMPv6NeighborSolicitation) ToIpv6Datagram(src Ipv6Addr, dst Ipv6Add
 		Payload: payload,
 	}
 	return dgrm
+}
+
+func (icmp *ICMPv6) ToIpv6Datagram(src Ipv6Addr, dst Ipv6Addr, hopLimit uint8) *Ipv6Datagram {
+	dgrm := &Ipv6Datagram{
+		Header: Ipv6Header{
+			Version:    6,
+			PayloadLen: icmp.MessageBody.Length(),
+			NextHeader: IPProtocolICMPV6,
+			HopLimit:   hopLimit,
+			Src:        src,
+			Dst:        dst,
+		},
+		Payload: icmp.MessageBody,
+	}
+	return dgrm
+}
+
+type ICMPv6 struct {
+	Header      ICMPv6Header
+	MessageBody Buffer
+}
+
+func ParseICMPv6(buf Buffer) (*ICMPv6, error) {
+	icmpv6 := &ICMPv6{}
+	parser := NetParser{
+		Buffer:  buf,
+		Pointer: 0,
+	}
+	u8, err := parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+	icmpv6.Header.Type = ICMPv6Type(u8)
+	icmpv6.Header.Code, err = parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+	icmpv6.Header.Checksum, err = parser.ParseU16()
+	if err != nil {
+		return nil, err
+	}
+	icmpv6.MessageBody, err = parser.ParseBuffer()
+	if err != nil {
+		return nil, err
+	}
+	return icmpv6, err
 }

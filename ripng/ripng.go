@@ -3,9 +3,11 @@ package ripng
 import "qiao/protocol"
 
 const (
-	RipngMaxRte  = 72
-	RipngUdpPort = 521
-	RipngVersion = 1
+	RipngMaxRte        = 72
+	RipngUdpPort       = 521
+	RipngVersion       = 1
+	RipngHeaderLength  = 4
+	RipngEntriesLength = 20
 )
 
 func MakeRipngPacket() *RipngPacket {

@@ -1,7 +1,6 @@
 package ripng
 
 import (
-	"fmt"
 	"qiao/protocol"
 )
 
@@ -17,9 +16,8 @@ type RouteTableEntry struct {
 	Metric   int               // 到达该前缀的成本
 }
 
-func AddRte(ne *RouteTableEntry) error {
+func Update(ne *RouteTableEntry) error {
 	rteLst := LookUpTable.rteList
-	fmt.Printf("len(rte): %d\n", len(rteLst))
 	for i := 0; i < len(rteLst); i++ {
 		e := rteLst[i]
 		if e.Ipv6Addr == ne.Ipv6Addr && e.Len == ne.Len {
@@ -29,7 +27,6 @@ func AddRte(ne *RouteTableEntry) error {
 			return nil
 		}
 	}
-	fmt.Printf("add ne: %+v\n", ne)
 	LookUpTable.rteList = append(rteLst, ne)
 	return nil
 }
@@ -83,15 +80,15 @@ func ExactQuery(addr protocol.Ipv6Addr, length int) *RouteTableEntry {
 	return nil
 }
 
-func (e *RouteTableEntry) ToRipngEntry(dst protocol.Ipv6Addr) *RipngRte {
+func (e *RouteTableEntry) ToRipngEntry(ifIdx int) *RipngRte {
 	rte := &RipngRte{
 		Prefix:    e.Ipv6Addr,
 		PrefixLen: uint8(e.Len),
 		Metric:    uint8(e.Metric),
 	}
 	// Poisoned Reverse
-	if rte.Prefix == dst {
-		rte.Metric = 0xff
+	if e.IfIndex == ifIdx {
+		rte.Metric = 16
 	}
 	return rte
 }
