@@ -39,22 +39,3 @@ func (check *Checksum32) U16() uint16 {
 	}
 	return uint16(u32)
 }
-
-func (dgrm *Ipv6Datagram) FillChecksum() {
-	checksum := Checksum32{}
-	checksum.AddBuffer(dgrm.Header.Src.Serialize())
-	checksum.AddBuffer(dgrm.Header.Dst.Serialize())
-	checksum.AddU16(dgrm.Header.PayloadLen)
-	checksum.AddU8(dgrm.Header.NextHeader)
-	checksum.AddBuffer(dgrm.Payload)
-	u16 := 0xffff - checksum.U16()
-	if dgrm.Header.NextHeader == IPProtocolICMPV6 {
-		binary.BigEndian.PutUint16(dgrm.Payload.Octet[2:4], u16)
-	}
-	if dgrm.Header.NextHeader == IPProtocolUdp {
-		if u16 == 0 {
-			u16 = 0xffff
-		}
-		binary.BigEndian.PutUint16(dgrm.Payload.Octet[6:8], u16)
-	}
-}

@@ -77,6 +77,7 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, srcMac
 					update()
 				}
 			}
+			return
 		}
 		if dgrm.Header.NextHeader == protocol.IPProtocolICMPV6 {
 			icmp, err := protocol.ParseICMPv6(dgrm.Payload)
@@ -87,7 +88,6 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, srcMac
 				icmp.Header.Type = protocol.ICMPv6TypeEchoReply
 				icmp.Header.Checksum = 0
 				ipv6Reply := icmp.ToIpv6Datagram(dgrm.Header.Dst, dgrm.Header.Src, 64)
-				ipv6Reply.FillChecksum()
 				h.SendIpv6(ipv6Reply, srcMac)
 			}
 		}

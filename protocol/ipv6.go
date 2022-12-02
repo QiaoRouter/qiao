@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/mdlayher/ndp"
 	"net/netip"
@@ -134,6 +135,26 @@ func (dgrm *Ipv6Datagram) ChecksumValid() bool {
 	checksum.AddU8(dgrm.Header.NextHeader)
 	checksum.AddBuffer(dgrm.Payload)
 	return checksum.U16() == 0xffff
+}
+
+func (dgrm *Ipv6Datagram) FillChecksum() {
+	checksum := Checksum32{}
+	checksum.AddBuffer(dgrm.Header.Src.Serialize())
+	checksum.AddBuffer(dgrm.Header.Dst.Serialize())
+	checksum.AddU16(dgrm.Header.PayloadLen)
+	checksum.AddU8(dgrm.Header.NextHeader)
+	checksum.AddBuffer(dgrm.Payload)
+	if dgrm.Header.NextHeader == IPProtocolICMPV6 {
+		u16 := 0xffff - checksum.U16()
+		binary.BigEndian.PutUint16(dgrm.Payload.Octet[2:4], u16)
+	}
+	if dgrm.Header.NextHeader == IPProtocolUdp {
+		u16 := 0xffff - checksum.U16()
+		if u16 == 0 {
+			u16 = 0xffff
+		}
+		binary.BigEndian.PutUint16(dgrm.Payload.Octet[6:8], u16)
+	}
 }
 
 func LenToMaskAddr(maskLen int) Ipv6Addr {
