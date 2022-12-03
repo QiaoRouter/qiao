@@ -173,7 +173,7 @@ nextP:
 		}
 		if isICMPv6NeighborSolicitation(dgrm) {
 			// 构造reply
-			fmt.Printf("isICMPv6NeighborSolicitation\n")
+			fmt.Printf("isICMPv6NeighborSolicitation, src is %+v\n", dgrm.Header.Src.String())
 		}
 	}
 
