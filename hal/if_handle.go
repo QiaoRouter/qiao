@@ -11,6 +11,7 @@ import (
 	"qiao/protocol"
 	"strconv"
 	"strings"
+	"time"
 
 	"net"
 )
@@ -116,11 +117,85 @@ func (h *IfHandle) intIpv6() error {
 	}
 	return nil
 }
+func SendIpv6(ifIdx int, ipv6Dgm *protocol.Ipv6Datagram, macDst protocol.EthernetAddr) {
+	for _, h := range IfHandles {
+		if h.IfIndex == ifIdx {
+			h.sendIpv6(ipv6Dgm, macDst)
+		}
+	}
+}
 
-func (h *IfHandle) SendIpv6(ipv6Dgm *protocol.Ipv6Datagram, macDst protocol.EthernetAddr) {
+func (h *IfHandle) sendIpv6(ipv6Dgm *protocol.Ipv6Datagram, macDst protocol.EthernetAddr) {
 	frame := ipv6Dgm.ToEthernetFrame(h.MAC, macDst)
 	err := h.PcapHandleOut.WritePacketData(frame.Serialize())
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (h *IfHandle) NextPacket() (dgrm *protocol.Ipv6Datagram, ether *protocol.EthernetFrame, err error) {
+nextP:
+	p, err := h.PacketSource.NextPacket()
+	if err != nil {
+		return nil, nil, err
+	}
+	ether, err = protocol.ParseEtherFrame(p.Data())
+	if err != nil {
+		goto nextP
+	}
+	if ether.Header.SrcHost.Equals(h.MAC) {
+		goto nextP
+	}
+	if ether.Header.Type != protocol.EthernetProtocolIPv6 {
+		goto nextP
+	}
+	dgrm, err = protocol.ParseIpv6Datagram(ether.Payload)
+	if err != nil {
+		goto nextP
+	}
+	if !dgrm.ChecksumValid() {
+		goto nextP
+	}
+
+	if dgrm.Header.NextHeader == protocol.IPProtocolICMPV6 {
+		if isICMPv6NeighborAdvertisement(dgrm) {
+			na, err := protocol.ParseICMPv6NeighborAdvert(dgrm.Payload)
+			if err != nil {
+				fmt.Printf("ParseICMPv6NeighborAdvert fail, err: %+v\n", err)
+				goto nextP
+			}
+			NdpTable.m[na.Target] = &NDPRecord{
+				Mac:        ether.Header.SrcHost,
+				ExpireTime: time.Now().Add(NDPRecordTimeout),
+			}
+			fmt.Printf("learn MAC addr of %+v is %+v\n", na.Target.String(),
+				ether.Header.SrcHost.String())
+		}
+		if isICMPv6NeighborSolicitation(dgrm) {
+			// 构造reply
+			fmt.Printf("isICMPv6NeighborSolicitation\n")
+		}
+	}
+
+	return dgrm, ether, nil
+}
+
+func isICMPv6NeighborAdvertisement(dgrm *protocol.Ipv6Datagram) bool {
+	if dgrm.Payload.Length() == 0 {
+		return false
+	}
+	if protocol.ICMPv6Type(dgrm.Payload.Octet[0]) == protocol.ICMPv6TypeNeighborAdvertisement {
+		return true
+	}
+	return false
+}
+
+func isICMPv6NeighborSolicitation(dgrm *protocol.Ipv6Datagram) bool {
+	if dgrm.Payload.Length() == 0 {
+		return false
+	}
+	if protocol.ICMPv6Type(dgrm.Payload.Octet[0]) == protocol.ICMPv6TypeNeighborSolicitation {
+		return true
+	}
+	return false
 }

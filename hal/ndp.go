@@ -1,16 +1,21 @@
 package hal
 
 import (
-	"fmt"
-	"net"
+	"errors"
 	"qiao/protocol"
 	"sync"
 	"time"
 )
 
+var (
+	NDPErrIpNotFound   = errors.New("ip not found")
+	NDPRecordTimeout   = time.Second * 14400
+	NDPRequestInterval = time.Second
+)
+
 var NdpTable struct {
 	sync.Mutex
-	m map[protocol.Ipv6Addr]NDPRecord
+	m map[protocol.Ipv6Addr]*NDPRecord
 }
 
 type NDPRecord struct {
@@ -18,18 +23,34 @@ type NDPRecord struct {
 	ExpireTime time.Time
 }
 
-func (h *IfHandle) GetNeighborMacAddr(ip protocol.Ipv6Addr) (net.HardwareAddr, error) {
+var ndpTimer = map[protocol.Ipv6Addr]time.Time{}
+
+func GetNeighborMacAddr(ifIdx int, ip protocol.Ipv6Addr) (protocol.EthernetAddr, error) {
+	etherAddr := protocol.EthernetAddr{}
+	for _, h := range IfHandles {
+		if h.IfIndex == ifIdx {
+			return h.getNeighborMacAddr(ip)
+		}
+	}
+	return etherAddr, nil
+}
+
+func (h *IfHandle) getNeighborMacAddr(ip protocol.Ipv6Addr) (protocol.EthernetAddr, error) {
+	addr := protocol.EthernetAddr{}
+	if NdpTable.m[ip] != nil {
+		return NdpTable.m[ip].Mac, nil
+	}
+	if !ndpTimer[ip].Add(NDPRequestInterval).Before(time.Now()) {
+		return addr, NDPErrIpNotFound
+	}
 	snm := ip.SolicitedNodeMulticast()
 	icmp_ns := protocol.MakeICMPv6NeighborSolicitation(ip, h.MAC)
 	var err error
 	ipv6_datagram := icmp_ns.ToIpv6Datagram(h.IPv6, snm)
-	//fmt.Printf("src_ip is %s, dst_ip is %s\n", h.IPv6[0].String(), snm)
-	snm_mac := snm.MulticastMac()
-	fmt.Printf("src_ether is %s, dst_ether is %s\n", h.MAC.String(), snm_mac.String())
 	ether := ipv6_datagram.ToEthernetFrame(h.MAC, snm.MulticastMac())
-	fmt.Printf("icmp_ns: %+v\n", icmp_ns)
-	fmt.Printf("ipv6_datagram: %+v\n", ipv6_datagram)
 	err = h.PcapHandleOut.WritePacketData(ether.Serialize())
-
-	return nil, err
+	if err != nil {
+		return addr, err
+	}
+	return addr, NDPErrIpNotFound
 }

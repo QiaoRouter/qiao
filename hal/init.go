@@ -27,5 +27,6 @@ func Init() {
 			}
 			IfHandles = append(IfHandles, ifHandle)
 		}
+		go ticker()
 	})
 }

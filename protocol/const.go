@@ -6,6 +6,8 @@ const (
 	IPv6Version       = uint8(6 << 4)
 	EthernetHeaderLen = 14
 	Ipv6HeaderLen     = 40
+	ICMPv6HeaderLen   = 8
+	Ipv6MinimumMTU    = 1280
 )
 
 type EthernetType uint16
@@ -13,9 +15,15 @@ type EthernetType uint16
 type ICMPv6Type uint8
 
 const (
-	ICMPv6TypeNeighborSolicitation = ICMPv6Type(135)
-	ICMPv6TypeEchoRequest          = ICMPv6Type(128)
-	ICMPv6TypeEchoReply            = ICMPv6Type(129)
+	ICMPv6TypeDestinationUnreachable = ICMPv6Type(3)
+	ICMPv6TypeNeighborSolicitation   = ICMPv6Type(135)
+	ICMPv6TypeNeighborAdvertisement  = ICMPv6Type(136)
+	ICMPv6TypeEchoRequest            = ICMPv6Type(128)
+	ICMPv6TypeEchoReply              = ICMPv6Type(129)
+)
+
+const (
+	ICMPv6CodeDestinationNetworkUnreachable = 0
 )
 
 type NDOptionType uint8

@@ -138,6 +138,11 @@ func (dgrm *Ipv6Datagram) ChecksumValid() bool {
 }
 
 func (dgrm *Ipv6Datagram) FillChecksum() {
+	if dgrm.Header.NextHeader == IPProtocolICMPV6 {
+		binary.BigEndian.PutUint16(dgrm.Payload.Octet[2:4], 0)
+	} else if dgrm.Header.NextHeader == IPProtocolUdp {
+		binary.BigEndian.PutUint16(dgrm.Payload.Octet[6:8], 0)
+	}
 	checksum := Checksum32{}
 	checksum.AddBuffer(dgrm.Header.Src.Serialize())
 	checksum.AddBuffer(dgrm.Header.Dst.Serialize())
@@ -237,4 +242,13 @@ func ParseIpv6Datagram(buf Buffer) (*Ipv6Datagram, error) {
 		return nil, err
 	}
 	return dgrm, nil
+}
+
+func (addr *Ipv6Addr) AllZero() bool {
+	for _, v := range addr.Octet {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
 }

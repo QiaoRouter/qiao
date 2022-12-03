@@ -41,6 +41,6 @@ func (e *Engine) sendRipngs(handleIdx int, ipv6Dst protocol.Ipv6Addr) {
 		}
 		ipv6Dgrm := ripngPacket.ToIpv6UdpPacket(h.LinkLocalIPv6, ipv6Dst)
 
-		go h.SendIpv6(ipv6Dgrm, macDst)
+		go hal.SendIpv6(h.IfIndex, ipv6Dgrm, macDst)
 	}
 }

@@ -122,32 +122,78 @@ type ICMPv6 struct {
 	MessageBody Buffer
 }
 
+func (p *NetParser) ParseICMPv6Header() (ICMPv6Header, error) {
+	header := ICMPv6Header{}
+	u8, err := p.ParseU8()
+	if err != nil {
+		return header, err
+	}
+	header.Type = ICMPv6Type(u8)
+	header.Code, err = p.ParseU8()
+	if err != nil {
+		return header, err
+	}
+	header.Checksum, err = p.ParseU16()
+	if err != nil {
+		return header, err
+	}
+	header.RestOfHeader, err = p.ParseU32()
+	if err != nil {
+		return header, err
+	}
+	return header, nil
+}
+
 func ParseICMPv6(buf Buffer) (*ICMPv6, error) {
 	icmpv6 := &ICMPv6{}
-	parser := NetParser{
+	p := NetParser{
 		Buffer:  buf,
 		Pointer: 0,
 	}
-	u8, err := parser.ParseU8()
+	var err error
+	icmpv6.Header, err = p.ParseICMPv6Header()
 	if err != nil {
 		return nil, err
 	}
-	icmpv6.Header.Type = ICMPv6Type(u8)
-	icmpv6.Header.Code, err = parser.ParseU8()
-	if err != nil {
-		return nil, err
-	}
-	icmpv6.Header.Checksum, err = parser.ParseU16()
-	if err != nil {
-		return nil, err
-	}
-	icmpv6.Header.RestOfHeader, err = parser.ParseU32()
-	if err != nil {
-		return nil, err
-	}
-	icmpv6.MessageBody, err = parser.ParseBuffer()
+	icmpv6.MessageBody, err = p.ParseBuffer()
 	if err != nil {
 		return nil, err
 	}
 	return icmpv6, err
+}
+
+func MakeICMPv6Packet(icmpTye ICMPv6Type, code uint8, payload Buffer) *ICMPv6 {
+	res := &ICMPv6{
+		Header: ICMPv6Header{
+			Type:         icmpTye,
+			Code:         code,
+			Checksum:     0,
+			RestOfHeader: 0,
+		},
+		MessageBody: payload,
+	}
+	return res
+}
+
+type ICMPv6NA struct {
+	Header ICMPv6Header
+	Target Ipv6Addr
+}
+
+func ParseICMPv6NeighborAdvert(buf Buffer) (*ICMPv6NA, error) {
+	na := &ICMPv6NA{}
+	var err error
+	p := NetParser{
+		Buffer:  buf,
+		Pointer: 0,
+	}
+	na.Header, err = p.ParseICMPv6Header()
+	if err != nil {
+		return nil, err
+	}
+	na.Target, err = p.ParseIpv6Addr()
+	if err != nil {
+		return nil, err
+	}
+	return na, nil
 }
