@@ -16,7 +16,6 @@ import (
 	"net"
 )
 
-type HostName string
 type IfNames []string
 
 type IfHandle struct {
@@ -90,7 +89,6 @@ func (h *IfHandle) intIpv6() error {
 				panic(err)
 			}
 			for _, addr := range addrs {
-				fmt.Printf("addr: %+v\n", addr)
 				if strings.HasPrefix(addr.String(), "fe80") {
 					continue
 				}

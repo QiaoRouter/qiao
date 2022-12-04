@@ -50,7 +50,11 @@ func disableIpv6(ifName string, open bool) {
 	if n != 1 || err != nil {
 		panic(fmt.Sprintf("n != 1 || err != nil, err: %+v", err))
 	}
-	fmt.Printf("disable %s interface ipv6\n", ifName)
+	if open {
+		fmt.Printf("open %s interface ipv6\n", ifName)
+	} else {
+		fmt.Printf("disable %s interface ipv6\n", ifName)
+	}
 }
 
 func macAddr(ifName string) protocol.EthernetAddr {

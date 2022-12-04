@@ -31,6 +31,12 @@ class MyTopology(IPTopo):
 
         super().build(*args, **kwargs)
 
+def close():
+    try:
+        os.remove('./if_name_to_ipv6')
+        os.remove('./nohup.out')
+    finally:
+        pass
 
 if __name__ == '__main__':
     net = IPNet(topo=MyTopology())
@@ -53,8 +59,12 @@ if __name__ == '__main__':
     net['r3'].cmd('ethtool -K r3-eth0 tx off')
     net['r3'].cmd('ethtool -K r3-eth1 tx off')
 
+    net['r1'].cmd('nohup ./qiao &')
+    net['r2'].cmd('nohup ./qiao &')
+    net['r3'].cmd('nohup ./qiao &')
     try:
         net.start()
         IPCLI(net)
     finally:
         net.stop()
+        close()

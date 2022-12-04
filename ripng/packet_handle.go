@@ -90,7 +90,6 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 func forwardPacket(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether *protocol.EthernetFrame) {
 	ttl := dgrm.Header.HopLimit
 	if ttl <= 1 {
-		fmt.Printf("ttl<1\n")
 		// 发送 ICMP Time Exceeded 消息
 		// 将接受到的 IPv6 packet 附在 ICMPv6 头部之后。
 		// 如果长度大于 1232 字节，则取前 1232 字节：

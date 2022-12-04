@@ -1,6 +1,7 @@
 package ripng
 
 import (
+	"fmt"
 	"qiao/hal"
 	"qiao/protocol"
 	"time"
@@ -18,8 +19,8 @@ func (e *Engine) Run() error {
 	defer hal.Close()
 
 	// 插入直连路由
-	for i := range hal.IfHandles {
-		h := hal.IfHandles[i]
+	for _, h := range hal.IfHandles {
+		fmt.Printf("插入%+v\n", h.IPv6.String())
 		e := &RouteTableEntry{
 			Ipv6Addr: h.IPv6.ToRouteAddr(h.IPv6Mask),
 			Len:      h.IPv6Mask,
@@ -27,6 +28,7 @@ func (e *Engine) Run() error {
 			Nexthop:  protocol.Ipv6Addr{}, // all zero, link-local route
 			Metric:   1,
 		}
+		fmt.Printf("e:%+v\n", e)
 		err := Update(e)
 		if err != nil {
 			panic(err)
