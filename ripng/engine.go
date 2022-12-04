@@ -15,6 +15,7 @@ func MakeRipngEngine() *Engine {
 
 func (e *Engine) Run() error {
 	hal.Init()
+	defer hal.Close()
 
 	// 插入直连路由
 	for i := range hal.IfHandles {

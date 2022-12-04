@@ -18,17 +18,17 @@ func (h *ICMPv6Header) Serialize() Buffer {
 	}
 }
 
-type ICMPv6NeighborSolicitationOption struct {
-	Type    NDOptionType
-	Len     uint8 /* in units of 8 octets */
-	Payload Buffer
+type ICMPv6NDOption struct {
+	Type          NDOptionType
+	Len           uint8 /* in units of 8 octets */
+	LinkLayerAddr EthernetAddr
 }
 
-func (opt *ICMPv6NeighborSolicitationOption) Serialize() Buffer {
+func (opt *ICMPv6NDOption) Serialize() Buffer {
 	var s []byte
 	s = ConcatU8(s, uint8(opt.Type))
 	s = ConcatU8(s, opt.Len)
-	s = ConcatBuffer(s, opt.Payload)
+	s = ConcatMac(s, &opt.LinkLayerAddr)
 	return Buffer{
 		Octet: s,
 	}
@@ -37,7 +37,7 @@ func (opt *ICMPv6NeighborSolicitationOption) Serialize() Buffer {
 type ICMPv6NeighborSolicitation struct {
 	Header     ICMPv6Header
 	TargetAddr Ipv6Addr
-	Options    []ICMPv6NeighborSolicitationOption
+	Options    []ICMPv6NDOption
 }
 
 func (icmp *ICMPv6NeighborSolicitation) Serialize() Buffer {
@@ -65,11 +65,30 @@ func MakeICMPv6NeighborSolicitation(linkLocalIpv6 Ipv6Addr,
 			RestOfHeader: 0,
 		},
 		TargetAddr: linkLocalIpv6,
-		Options: []ICMPv6NeighborSolicitationOption{
+		Options: []ICMPv6NDOption{
 			{
-				Type:    NDOptionSourceLinkAddr,
-				Len:     1,
-				Payload: mac.Serialize(),
+				Type:          NDOptionSourceLinkAddr,
+				Len:           1,
+				LinkLayerAddr: mac,
+			},
+		},
+	}
+	return icmp_ns
+}
+
+func MakeICMPv6NA(target Ipv6Addr, mac EthernetAddr) *ICMPv6NA {
+	icmp_ns := &ICMPv6NA{
+		Header: ICMPv6Header{
+			Type:         ICMPv6TypeNeighborAdvertisement,
+			Code:         0,
+			RestOfHeader: 0x60000000,
+		},
+		Target: target,
+		Options: []ICMPv6NDOption{
+			{
+				Type:          NDOptionTargetLinkAddr,
+				Len:           1,
+				LinkLayerAddr: mac,
 			},
 		},
 	}
@@ -176,8 +195,38 @@ func MakeICMPv6Packet(icmpTye ICMPv6Type, code uint8, payload Buffer) *ICMPv6 {
 }
 
 type ICMPv6NA struct {
-	Header ICMPv6Header
-	Target Ipv6Addr
+	Header  ICMPv6Header
+	Target  Ipv6Addr
+	Options []ICMPv6NDOption
+}
+
+func (na *ICMPv6NA) ToIpv6Datagram(src Ipv6Addr, dst Ipv6Addr) *Ipv6Datagram {
+	payload := na.Serialize()
+	return &Ipv6Datagram{
+		Header: Ipv6Header{
+			Version:    6,
+			PayloadLen: payload.Length(),
+			NextHeader: IPProtocolICMPV6,
+			HopLimit:   255,
+			Src:        src,
+			Dst:        dst,
+		},
+		Payload: payload,
+	}
+}
+
+func (na *ICMPv6NA) Serialize() Buffer {
+	var s []byte
+	s = ConcatBuffer(s, na.Header.Serialize())
+	s = ConcatIpv6Addr(s, &na.Target)
+	for _, opt := range na.Options {
+		s = ConcatU8(s, uint8(opt.Type))
+		s = ConcatU8(s, opt.Len)
+		s = ConcatMac(s, &opt.LinkLayerAddr)
+	}
+	return Buffer{
+		Octet: s,
+	}
 }
 
 func ParseICMPv6NeighborAdvert(buf Buffer) (*ICMPv6NA, error) {
@@ -196,4 +245,21 @@ func ParseICMPv6NeighborAdvert(buf Buffer) (*ICMPv6NA, error) {
 		return nil, err
 	}
 	return na, nil
+}
+
+func ParseICMPv6NeighborSolicitation(buf Buffer) (*ICMPv6NeighborSolicitation, error) {
+	ns := &ICMPv6NeighborSolicitation{}
+	var err error
+	p := NetParser{
+		Buffer: buf,
+	}
+	ns.Header, err = p.ParseICMPv6Header()
+	if err != nil {
+		return nil, err
+	}
+	ns.TargetAddr, err = p.ParseIpv6Addr()
+	if err != nil {
+		return nil, err
+	}
+	return ns, nil
 }

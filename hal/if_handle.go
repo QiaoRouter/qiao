@@ -172,8 +172,16 @@ nextP:
 				ether.Header.SrcHost.String())
 		}
 		if isICMPv6NeighborSolicitation(dgrm) {
-			// 构造reply
-			fmt.Printf("isICMPv6NeighborSolicitation, src is %+v\n", dgrm.Header.Src.String())
+			/* 构造reply */
+			ns, err := protocol.ParseICMPv6NeighborSolicitation(dgrm.Payload)
+			if err != nil {
+				fmt.Printf("ParseICMPv6NeighborSolicitation fail, err:%+v, h.IPv6: %+v\n", err)
+			}
+			if ns.TargetAddr.Equals(h.IPv6) || ns.TargetAddr.Equals(h.LinkLocalIPv6) {
+				nd := protocol.MakeICMPv6NA(ns.TargetAddr, h.MAC)
+				replyIpv6 := nd.ToIpv6Datagram(ns.TargetAddr, dgrm.Header.Src)
+				h.sendIpv6(replyIpv6, ether.Header.SrcHost)
+			}
 		}
 	}
 

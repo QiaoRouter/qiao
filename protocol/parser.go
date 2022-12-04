@@ -69,3 +69,7 @@ func (p *NetParser) ParseIpv6Addr() (Ipv6Addr, error) {
 	p.Pointer += IPv6AddrLen
 	return addr, nil
 }
+
+func (p *NetParser) Eof() bool {
+	return p.Pointer == int(p.Buffer.Length())
+}

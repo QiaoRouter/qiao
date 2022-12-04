@@ -16,7 +16,7 @@ func Init() {
 			panic(err)
 		}
 		for i := range ifs {
-			// disableIpv6(ifs[i].Name, true)
+			disableIpv6(ifs[i].Name, true)
 			ifHandle := &IfHandle{
 				IfName: ifs[i].Name,
 			}
@@ -26,7 +26,14 @@ func Init() {
 				continue
 			}
 			IfHandles = append(IfHandles, ifHandle)
+			disableIpv6(ifs[i].Name, false)
 		}
 		go ticker()
 	})
+}
+
+func Close() {
+	for _, h := range IfHandles {
+		disableIpv6(h.IfName, true)
+	}
 }

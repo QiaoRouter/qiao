@@ -18,8 +18,10 @@ func (e *Engine) receivePacketAndHandleIt(h *hal.IfHandle) {
 
 func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether *protocol.EthernetFrame) {
 	dstIsMe := false
-	if dgrm.Header.Dst.Equals(h.IPv6) {
-		dstIsMe = true
+	for _, ifh := range hal.IfHandles {
+		if dgrm.Header.Dst.Equals(ifh.IPv6) {
+			dstIsMe = true
+		}
 	}
 	multicastAddr, _ := protocol.ParseIpv6("ff02::9")
 	if dgrm.Header.Dst.Equals(multicastAddr) {
@@ -39,7 +41,7 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 					Nexthop:  dgrm.Header.Src,
 					Metric:   int(e.Metric + 1),
 				}
-				if rte.Metric == 0xff {
+				if rte.Metric == 0xf {
 					continue
 				}
 				oldE := ExactQuery(e.Prefix, int(e.PrefixLen))
@@ -88,6 +90,7 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 func forwardPacket(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether *protocol.EthernetFrame) {
 	ttl := dgrm.Header.HopLimit
 	if ttl <= 1 {
+		fmt.Printf("ttl<1\n")
 		// 发送 ICMP Time Exceeded 消息
 		// 将接受到的 IPv6 packet 附在 ICMPv6 头部之后。
 		// 如果长度大于 1232 字节，则取前 1232 字节：
@@ -125,6 +128,7 @@ func forwardPacket(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether *protocol
 			hal.SendIpv6(e.IfIndex, dgrm, dstMac)
 		} else {
 			// 没有找到路由
+			fmt.Printf("没有找到路由\n")
 		}
 	}
 }
@@ -185,7 +189,7 @@ func ParseRipngPacket(dgrm *protocol.Ipv6Datagram) (*RipngPacket, error) {
 		if err != nil {
 			return nil, err
 		}
-		if e.Metric >= 0xff {
+		if e.Metric >= 0xf {
 			continue
 		}
 		if e.PrefixLen > 128 {
