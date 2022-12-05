@@ -127,6 +127,7 @@ func forwardPacket(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether *protocol
 			hal.SendIpv6(e.IfIndex, dgrm, dstMac)
 		} else {
 			// 没有找到路由
+			// todo 回复icmpv6 route not found消息
 			fmt.Printf("没有找到路由\n")
 		}
 	}

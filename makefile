@@ -9,7 +9,6 @@ run:
 test:
 	cd hal && go test
 
-
 run-r1:
 	bird6 -c ./setup/ripng/netns/v1/bird-r1.conf -d -s ~/bird-r1.ctl
 
