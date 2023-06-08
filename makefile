@@ -6,6 +6,9 @@ build:
 run:
 	go build && python3 typo.py
 
+dhcp:
+	go build && echo hello
+
 test:
 	cd hal && go test
 

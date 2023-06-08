@@ -59,9 +59,9 @@ if __name__ == '__main__':
     net['r3'].cmd('ethtool -K r3-eth0 tx off')
     net['r3'].cmd('ethtool -K r3-eth1 tx off')
 
-    net['r1'].cmd('nohup ./qiao &')
-    net['r2'].cmd('nohup ./qiao &')
-    net['r3'].cmd('nohup ./qiao &')
+    net['r1'].cmd('nohup ./qiao --ripng &')
+    net['r2'].cmd('nohup ./qiao --ripng &')
+    net['r3'].cmd('nohup ./qiao --ripng &')
     try:
         net.start()
         IPCLI(net)
