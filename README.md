@@ -6,11 +6,15 @@
 ##### 2023.6.9 更新
 1. 迁移到 vmware ubuntu 成功
 2. make build && make run 成功
-> mininet h1 ping h2 成功
+> mininet h1 ping h2 成功\
 > mininet h2 ping h1 成功
 3. 创建新分支 dhcpv6
 4. 尝试只 merge 某个文件
-
+> 1. git checkout -b tmp\
+> 2. git checkout source_branch filename\
+> 3. git checkout master\
+> 4. git merge tmp\
+> 5. git branch -d tmp
 
 # How to play with it?
 1. 需要在ubuntu系统下运行.
