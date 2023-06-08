@@ -15,6 +15,7 @@
 > 3. git checkout master
 > 4. git merge tmp
 > 5. git branch -d tmp
+5. **TODO** 编写 dhcp 的 typo.py，构造 R!, R2 和 PC1 三台机器组成的网络
 
 # How to play with it?
 1. 需要在ubuntu系统下运行.
