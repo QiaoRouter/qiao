@@ -13,3 +13,40 @@
 7. 运行go mod tidy安装基础依赖
 8. 运行make run, 运行ipmininet搭建拓扑
 9. 在mininet> 终端下输入h1 ping h2, 若能够ping通，说明环境搭建成功
+
+
+## 关于环境搭建
+可以使用setup里的sh文件，用ip命令搭建拓扑;
+也可以使用ipmininet.
+
+关于ipmininet的基本使用:
+在typo.py文件里，有关于网络拓扑的配置，初始化的时候，r1、r2、r3会在后台运行qiao
+```
+make run
+```
+执行make run之后，出现mininet>
+可以与之交互。
+
+### 关于typo.py
+在typo.py里，我们给出了两个主机和三个路由器：
+```
+        h1 = self.addHost("h1", use_v4=False)
+        r1 = self.addHost("r1", use_v4=False)
+        r2 = self.addHost("r2", use_v4=False)
+        r3 = self.addHost("r3", use_v4=False)
+        h2 = self.addHost("h2", use_v4=False)
+```
+
+如果要在特定的主机下执行命令，在前面加主机的前缀就好，例如h1要ping h2，可以执行h1 ping h2。
+另一个基础用法是，给这个主机打开一个新终端，在这个终端下执行命令并进行观测，可以执行
+```
+xterm h1 r1 r2 r3 h2
+```
+
+另一个调试常用方法是，注释掉以下typo.py里的三行代码
+```
+    net['r1'].cmd('nohup ./qiao &')
+    net['r2'].cmd('nohup ./qiao &')
+    net['r3'].cmd('nohup ./qiao &')
+```
+使用xterm手动让路由器运行qiao软件，并观察qiao的调试信息，与此同时还可以打开wireshark对机器收到的数据包进行分析。
