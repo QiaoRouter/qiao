@@ -3,6 +3,13 @@
 ##### 2023.6.5 更新
 根目录新增目录 dhcpv6，/setup 拷贝了 dhcpv6 虚拟网络搭建和测试脚本
 
+##### 2023.6.9 更新
+1. 迁移到 vmware ubuntu 成功
+2. make build && make run 成功
+> mininet h1 ping h2 成功
+> mininet h2 ping h1 成功
+3. 创建新分支 dhcpv6
+
 # How to play with it?
 1. 需要在ubuntu系统下运行.
 2. 本项目最初尝试使用mininet进行拓扑的搭建和测试.
