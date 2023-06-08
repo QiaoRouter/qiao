@@ -9,6 +9,8 @@
 > mininet h1 ping h2 成功
 > mininet h2 ping h1 成功
 3. 创建新分支 dhcpv6
+4. 尝试只 merge 某个文件
+
 
 # How to play with it?
 1. 需要在ubuntu系统下运行.
