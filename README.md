@@ -10,10 +10,10 @@
 > mininet h2 ping h1 成功
 3. 创建新分支 dhcpv6
 4. 尝试只 merge 某个文件
-> 1. git checkout -b tmp\
-> 2. git checkout source_branch filename\
-> 3. git checkout master\
-> 4. git merge tmp\
+> 1. git checkout -b tmp
+> 2. git checkout source_branch filename
+> 3. git checkout master
+> 4. git merge tmp
 > 5. git branch -d tmp
 
 # How to play with it?
