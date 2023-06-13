@@ -26,6 +26,11 @@
 1. 实现 dhcpv6 服务的函数体，从判断端口号开始，只处理来自 udp 并且发送给 DHCP_SERVER port 的报文
 2. 新增接口用于获取 dhcp options，包括 ParseDhcpOptions, ParseClientId, ParseIaNa, ParseGarbage 等，其中 ParseGarbage 需要依赖 ParseSkipNBytes
 
+##### 2023.6.14 更新
+1. 基本完成迁移，还没有搭建拓扑测试
+2. 大量的内存拷贝
+3. 事情太多了呜呜呜
+
 # How to play with it?
 1. 需要在ubuntu系统下运行.
 2. 本项目最初尝试使用mininet进行拓扑的搭建和测试.
