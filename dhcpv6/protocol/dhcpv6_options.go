@@ -1,4 +1,4 @@
-package protocol
+package dhcpv6
 
 import (
 	"qiao/protocol"
@@ -48,27 +48,27 @@ type DuidLlt struct {
 	LinkLayerAddr protocol.EthernetAddr
 }
 
-// IaNa Identity Association for Non-temporary Addresses Option (in 21.4.)
-type IaNa struct {
-	IaId uint32
-	T1   uint32
-	T2   uint32
+// OptionIaNa Identity Association for Non-temporary Addresses Option (in 21.4.)
+type OptionIaNa struct {
+	Header OptionsHdr
+	IaId   uint32
+	T1     uint32
+	T2     uint32
 }
-
-/*
-   uint16_t option_iaaddr;
-   uint16_t option_len;
-   struct in6_addr ip6addr;
-   uint32_t preferred_lifetime;
-   uint32_t valid_lifetime;
-*/
 
 // IaNaOptions 21.6.  IA Address Option
 // 4 + 4 + 16 + 8 + 8 = 40
-type IaNaOptions struct {
+type IaAddressOption struct {
+	Header            OptionsHdr
 	OptionIaAddr      uint16
 	OptionLen         uint16
 	Ip6Addr           protocol.Ipv6Addr
 	PreferredLifetime uint32
 	ValidLifetime     uint32
+}
+
+// OptionClientId
+type OptionClientId struct {
+	Header OptionsHdr
+	DUID   []byte
 }

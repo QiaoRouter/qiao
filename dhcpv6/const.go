@@ -11,7 +11,24 @@ var DefaultGateway = protocol.Ipv6Addr{
 	},
 }
 
+// dhcp's udp port
 const (
 	DHCP_SERVER = 547
 	DHCP_CLIENT = 546
+)
+
+// dhcp mst-type
+const (
+	DHCP_SOLICIT   = 1
+	DHCP_ADVERTISE = 2
+	DHCP_REQUEST   = 3
+)
+
+// dhcp option code
+const (
+	DHCP_OPTION_CLIENTID    = 1
+	DHCP_OPTION_SERVERID    = 2
+	DHCP_OPTION_IA_NA       = 3
+	DHCP_OPTION_IAADDR      = 5
+	DHCP_OPTION_DNS_SERVERS = 23
 )

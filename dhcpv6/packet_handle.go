@@ -2,6 +2,7 @@ package dhcpv6
 
 import (
 	"fmt"
+	dhcpv6 "qiao/dhcpv6/protocol"
 	"qiao/hal"
 	"qiao/protocol"
 )
@@ -41,6 +42,24 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 			if udp.DstPort == DHCP_SERVER {
 				fmt.Println("确实是DHCP Solicit 或者 DHCP request 报文")
 			}
+
+			// 解析出来 udp 报文中的 dhcp
+			dhcp, err := ParseDhcpPacket(udp.Payload)
+
+			// 检查是否为 DHCPv6 Solicit 或 DHCPv6 Request
+			if dhcp.Header.MsgType == DHCP_SOLICIT || dhcp.Header.MsgType == DHCP_ADVERTISE {
+				fmt.Println("确实是个 dhcp solicit 或者是 dhcp request 报文")
+			}
+
+			// 解析 DHCPv6 头部后的 Option，找到其中的 Client Identifier
+			// 和 IA_NA 中的 IAID
+			// https://www.rfc-editor.org/rfc/rfc8415.html#section-21.2
+			// https://www.rfc-editor.org/rfc/rfc8415.html#section-21.4
+
+			// 解析出来两个 Option 包裹
+			clientIdPacket, IaNaPacket, _ := ParseDhcpOptions(dhcp.MessageBody)
+
+			return
 		}
 		if dgrm.Header.NextHeader == protocol.IPProtocolICMPV6 {
 
@@ -52,6 +71,92 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 		if dgrm.Header.Dst.Octet[0] == 0xff {
 			return
 		}
-		forwardPacket(h, dgrm, ether)
+		// forwardPacket(h, dgrm, ether)
 	}
+}
+
+func ParseDhcpOptions(buf protocol.Buffer) (*dhcpv6.OptionClientId, *dhcpv6.OptionIaNa, error) {
+	parser := protocol.NetParser{
+		Buffer:  buf,
+		Pointer: 0,
+	}
+
+	// 是否两个都已经找到
+	flagClientIdentifier, flagIaNa := false, false
+	clientIdentifier, iaNa := &dhcpv6.OptionClientId{}, &dhcpv6.OptionIaNa{}
+
+	// 专门儿照着两个
+	for !flagClientIdentifier || !flagIaNa {
+		// 先拿出来编号看看
+		optionCode, _ := parser.ParseU16()
+		if optionCode == DHCP_OPTION_CLIENTID {
+			fmt.Println("找着 client id 了")
+
+			// 获取 client id 完整数据
+			clientIdentifier.Header.OptionCode = optionCode
+			clientIdentifier, _ = ParseClientId(&parser)
+
+			flagClientIdentifier = true
+		} else if optionCode == DHCP_OPTION_IA_NA {
+			fmt.Println("找着 ia-na 了")
+
+			// 获取 client id 完整数据
+			iaNa.Header.OptionCode = optionCode
+			iaNa, _ = ParseIaNa(&parser)
+
+			flagIaNa = true
+		} else {
+			ParseGargabe(&parser)
+		}
+	}
+
+	return clientIdentifier, iaNa, nil
+}
+
+func ParseClientId(parser *protocol.NetParser) (*dhcpv6.OptionClientId, error) {
+
+}
+
+func ParseIaNa(parser *protocol.NetParser) (*dhcpv6.OptionIaNa, error) {
+
+}
+
+func ParseGargabe(parser *protocol.NetParser) {
+
+}
+
+// 解析 dhcpv6 报文头部
+func ParseDhcpPacket(buf protocol.Buffer) (*DHCPv6Packet, error) {
+	var err error
+	parser := protocol.NetParser{
+		Buffer:  buf,
+		Pointer: 0,
+	}
+	dhcp := &DHCPv6Packet{}
+
+	// dhcp 类型
+	dhcp.Header.MsgType, err = parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+
+	// txn id 高位
+	dhcp.Header.TransactionIdHi, err = parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+
+	// txn id 低位
+	dhcp.Header.TransactionIdLo, err = parser.ParseU8()
+	if err != nil {
+		return nil, err
+	}
+
+	// 报文内容
+	dhcp.MessageBody, err = parser.ParseBuffer()
+	if err != nil {
+		return nil, err
+	}
+
+	return dhcp, err
 }
