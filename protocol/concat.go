@@ -16,6 +16,13 @@ func ConcatIpv6Addr(s []byte, ipv6Addr *Ipv6Addr) []byte {
 	return s
 }
 
+func ConcatNBytes(s []byte, N int, bytes []byte) []byte {
+	for i := 0; i < N; i++ {
+		s = append(s, bytes[i])
+	}
+	return s
+}
+
 func ConcatU16(s []byte, u16 uint16) []byte {
 	b := make([]byte, 2)
 	binary.BigEndian.PutUint16(b, u16)

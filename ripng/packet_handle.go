@@ -27,6 +27,7 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 	if dgrm.Header.Dst.Equals(multicastAddr) {
 		dstIsMe = true
 	}
+
 	if dstIsMe {
 		if dgrm.Header.NextHeader == protocol.IPProtocolUdp {
 			ripngPacket, err := ParseRipngPacket(dgrm)
@@ -64,6 +65,7 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 			}
 			return
 		}
+
 		if dgrm.Header.NextHeader == protocol.IPProtocolICMPV6 {
 			icmp, err := protocol.ParseICMPv6(dgrm.Payload)
 			if err != nil {
@@ -76,6 +78,7 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 				hal.SendIpv6(h.IfIndex, ipv6Reply, ether.Header.SrcHost)
 			}
 		}
+
 	} else {
 		// forwarding
 		// 目标地址不是我，考虑转发给下一跳

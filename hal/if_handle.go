@@ -32,7 +32,7 @@ type IfHandle struct {
 }
 
 func (h *IfHandle) Init() error {
-	h.MAC = macAddr(h.IfName)
+	h.MAC = MacAddr(h.IfName)
 	if h.MAC.AllZero() {
 		return errors.New(fmt.Sprintf("%+v mac all zero", h.IfName))
 	}

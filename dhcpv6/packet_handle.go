@@ -60,7 +60,86 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 			// 解析出来两个 Option 包裹
 			clientIdPacket, IaNaPacket, _ := ParseDhcpOptions(dhcp.MessageBody)
 
+			// 先构造一个 dhcp 的回复报文
+			// 1. 生成 dhcp 实体
+			// 2. 调用成员函数 -> toIpv6UdpPacket
+			// 3. 内部构造 udp header -> 将 dhcp 序列化 -> 将 udp 序列化 -> 返回
+			// 4. 内部构造 ipv6 header
+			replyDhcp := DHCPv6Packet{}
+
 			// 构造响应对方的 ipv6 报文
+			// 构造头部：msg-type + txn-id
+			if dhcp.Header.MsgType == DHCP_SOLICIT {
+				replyDhcp.Header.MsgType = DHCP_ADVERTISE
+			} else if dhcp.Header.MsgType == DHCP_REQUEST {
+				replyDhcp.Header.MsgType = DHCP_REPLY
+			}
+
+			replyDhcp.Header.TransactionIdHi = dhcp.Header.TransactionIdHi
+			replyDhcp.Header.TransactionIdLo = dhcp.Header.TransactionIdLo
+
+			// 构造 options
+			replyDhcpLen, curLen := 0, 0
+
+			// 1. Server Identifier：根据本路由器在本接口上的 MAC 地址生成。
+			//    - https://www.rfc-editor.org/rfc/rfc8415.html#section-21.3
+			//    - Option Code: 2
+			//    - Option Length: 14
+			//    - DUID Type: 1 (Link-layer address plus time) -> 16 bits
+			//    - Hardware Type: 1 (Ethernet) -> 16 bits
+			//    - DUID Time: 0 -> 32 bits
+			//    - Link layer address: MAC Address -> 46 bits = 6B
+
+			// 1. Server Identifier 头部
+			replyDhcp.MessageBody.Octet = protocol.ConcatU16(replyDhcp.MessageBody.Octet, DHCP_OPTION_SERVERID)
+			replyDhcp.MessageBody.Octet = protocol.ConcatU16(replyDhcp.MessageBody.Octet, DHCP_OPTIONS_DUID_LEN)
+
+			// 1. Server Identifier 身体
+			replyDhcp.MessageBody.Octet = protocol.ConcatU16(replyDhcp.MessageBody.Octet, 1) // DUID Type: 1 (Link-layer address plus time)
+			replyDhcp.MessageBody.Octet = protocol.ConcatU16(replyDhcp.MessageBody.Octet, 1) // Hardware Type: 1 (Ethernet)
+			replyDhcp.MessageBody.Octet = protocol.ConcatU32(replyDhcp.MessageBody.Octet, 0) // DUID Time: 0 -> 32 bits
+			localMac := hal.MacAddr(h.IfName)
+			replyDhcp.MessageBody.Octet = protocol.ConcatMac(replyDhcp.MessageBody.Octet, &localMac)
+
+			// 1. 计算长度
+			curLen = DHCP_OPTIONS_HDR_LEN + DHCP_OPTIONS_DUID_LEN
+			replyDhcpLen += curLen
+
+			// 2. Client Identifier
+			//    - https://www.rfc-editor.org/rfc/rfc8415.html#section-21.2
+			//    - Option Code: 1
+			//    - Option Length: 和 Solicit/Request 中的 Client Identifier
+			//    一致
+			//    - DUID: 和 Solicit/Request 中的 Client Identifier 一致
+
+			// 2. 头部
+			replyDhcp.MessageBody.Octet = protocol.ConcatU16(replyDhcp.MessageBody.Octet, DHCP_OPTION_CLIENTID)
+			replyDhcp.MessageBody.Octet = protocol.ConcatU16(replyDhcp.MessageBody.Octet, clientIdPacket.Header.OptionLen)
+
+			// 2. 身体 -> 只需要一个 uuid
+			replyDhcp.MessageBody.Octet = protocol.ConcatNBytes(replyDhcp.MessageBody.Octet, int(clientIdPacket.Header.OptionLen), clientIdPacket.DUID)
+
+			// 3. 计算长度
+			curLen = DHCP_OPTIONS_HDR_LEN + DHCP_OPTIONS_DUID_LEN
+			replyDhcpLen += curLen
+
+			// 3. Identity Association for Non-temporary
+			// Address：记录服务器将会分配给客户端的 IPv6 地址。
+			//    - https://www.rfc-editor.org/rfc/rfc8415.html#section-21.4
+			//    - Option Code: 3
+			//    - Option Length: 40
+
+			//    - IAID: 和 Solicit/Request 中的 Identity Association for
+			//    Non-temporary Address 一致
+			//    - T1: 0
+			//    - T2: 0
+			//    - IA_NA options:
+			//      - https://www.rfc-editor.org/rfc/rfc8415.html#section-21.6
+			//      - Option code: 5 (IA address)
+			//      - Length: 24
+			//      - IPv6 Address: fd00::1:2
+			//      - Preferred lifetime: 54000s
+			//      - Valid lifetime: 86400s
 
 			return
 		}

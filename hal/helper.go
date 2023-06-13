@@ -57,7 +57,7 @@ func disableIpv6(ifName string, open bool) {
 	}
 }
 
-func macAddr(ifName string) protocol.EthernetAddr {
+func MacAddr(ifName string) protocol.EthernetAddr {
 	netIfs, err := net.Interfaces()
 	if err != nil {
 		panic(err)
