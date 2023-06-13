@@ -141,6 +141,12 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 			//      - Preferred lifetime: 54000s
 			//      - Valid lifetime: 86400s
 
+			// 1. 头部
+
+			// 2. 身体
+
+			// 3. 计算长度
+
 			return
 		}
 		if dgrm.Header.NextHeader == protocol.IPProtocolICMPV6 {
