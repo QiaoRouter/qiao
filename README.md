@@ -10,12 +10,7 @@
 > mininet h2 ping h1 成功
 3. 创建新分支 dhcpv6
 4. 尝试只 merge 某个文件
-> 1. git checkout -b tmp
-> 2. git checkout source_branch filename
-> 3. git checkout master
-> 4. git merge tmp
-> 5. git branch -d tmp
-5. **TODO** 编写 dhcp 的 typo.py，构造 R!, R2 和 PC1 三台机器组成的网络
+
 
 # How to play with it?
 1. 需要在ubuntu系统下运行.
