@@ -10,7 +10,20 @@
 > mininet h2 ping h1 成功
 3. 创建新分支 dhcpv6
 4. 尝试只 merge 某个文件
+> 1. git checkout -b tmp
+> 2. git checkout source_branch filename
+> 3. git checkout master
+> 4. git merge tmp
+> 5. git branch -d tmp
+5. **TODO** 编写 dhcp 的 typo.py，构造 R!, R2 和 PC1 三台机器组成的网络
 
+##### 2023.6.12 更新
+1. 阅读 ripng 大致流程。理解 qiao 中的接口
+2. 厘清入口工作函数 （HandleIpv6），在这之前的 NextPacket 已经做过邻居发现协议的工作了。
+
+##### 2023.6.13 更新
+1. 实现 dhcpv6 服务的函数体，从判断端口号开始，只处理来自 udp 并且发送给 DHCP_SERVER port 的报文
+2. 新增接口用于获取 dhcp options，包括 ParseDhcpOptions, ParseClientId, ParseIaNa, ParseGarbage 等，其中 ParseGarbage 需要依赖 ParseSkipNBytes
 
 # How to play with it?
 1. 需要在ubuntu系统下运行.
