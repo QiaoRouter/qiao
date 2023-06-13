@@ -97,7 +97,53 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 		if dgrm.Header.Dst.Octet[0] == 0xff {
 			return
 		}
-		// forwardPacket(h, dgrm, ether)
+		forwardPacket(h, dgrm, ether)
+	}
+}
+
+func forwardPacket(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether *protocol.EthernetFrame) {
+	ttl := dgrm.Header.HopLimit
+	if ttl <= 1 {
+		// 发送 ICMP Time Exceeded 消息
+		// 将接受到的 IPv6 packet 附在 ICMPv6 头部之后。
+		// 如果长度大于 1232 字节，则取前 1232 字节：
+		// 1232 = IPv6 Minimum MTU(1280) - IPv6 Header(40) - ICMPv6 Header(8)
+		// 意味着发送的 ICMP Time Exceeded packet 大小不大于 IPv6 Minimum MTU
+		// 不会因为 MTU 问题被丢弃。
+		// 详见 RFC 4443 Section 3.3 Time Exceeded Message
+		// 计算 Checksum 后由自己的 IPv6 地址发送给源 IPv6 地址。
+		var payloadLen int
+		if ether.Payload.Length()+protocol.ICMPv6HeaderLen+protocol.Ipv6HeaderLen > protocol.Ipv6MinimumMTU {
+			payloadLen = protocol.Ipv6MinimumMTU - protocol.ICMPv6HeaderLen - protocol.Ipv6HeaderLen
+		} else {
+			payloadLen = int(ether.Payload.Length())
+		}
+		buf := ether.Payload.Prefix(payloadLen)
+		icmpv6 := protocol.MakeICMPv6Packet(protocol.ICMPv6TypeDestinationUnreachable,
+			protocol.ICMPv6CodeDestinationNetworkUnreachable, buf)
+		ipv6DgrmReply := icmpv6.ToIpv6Datagram(h.IPv6, dgrm.Header.Src, 255)
+		hal.SendIpv6(h.IfIndex, ipv6DgrmReply, ether.Header.SrcHost)
+	} else {
+		e := PrefixQuery(dgrm.Header.Dst)
+		if e != nil {
+			nextIpAddr := e.Nexthop
+			if nextIpAddr.AllZero() {
+				nextIpAddr = dgrm.Header.Dst
+			}
+
+			dstMac, err := hal.GetNeighborMacAddr(e.IfIndex, nextIpAddr)
+			if err != nil {
+				fmt.Printf("h.GetNeighborMacAddr fail, err: %+v\n, nextIP: %+v\n",
+					err, nextIpAddr.String())
+				return
+			}
+			dgrm.Header.HopLimit--
+			hal.SendIpv6(e.IfIndex, dgrm, dstMac)
+		} else {
+			// 没有找到路由
+			// todo 回复icmpv6 route not found消息
+			fmt.Printf("没有找到路由\n")
+		}
 	}
 }
 

@@ -3,6 +3,7 @@ package dhcpv6
 import (
 	"qiao/hal"
 	"qiao/protocol"
+	"qiao/ripng"
 )
 
 // 向所有interface发送完整路由表
@@ -19,17 +20,17 @@ func (e *Engine) sendRipngs(handleIdx int, ipv6Dst protocol.Ipv6Addr) {
 	macDst := ipv6Dst.MulticastMac()
 	rtes := LookUpTable.rteList
 
-	for i := 0; i < len(rtes)/RipngMaxRte+1; i++ {
-		ripngPacket := &RipngPacket{}
-		lo := i * RipngMaxRte
+	for i := 0; i < len(rtes)/ripng.RipngMaxRte+1; i++ {
+		ripngPacket := &ripng.RipngPacket{}
+		lo := i * ripng.RipngMaxRte
 		hi := 0
-		if lo+RipngMaxRte < len(rtes) {
-			hi = lo + RipngMaxRte
+		if lo+ripng.RipngMaxRte < len(rtes) {
+			hi = lo + ripng.RipngMaxRte
 		} else {
 			hi = len(rtes)
 		}
 		ripngPacket.NumEntries = uint32(hi - lo)
-		ripngPacket.Command = RipngTypeResponse
+		ripngPacket.Command = ripng.RipngTypeResponse
 		for j := lo; j < hi; j++ {
 			ripngPacket.Entries = append(ripngPacket.Entries,
 				rtes[j].ToRipngEntry(h.IfIndex))

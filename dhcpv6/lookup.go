@@ -2,6 +2,7 @@ package dhcpv6
 
 import (
 	"qiao/protocol"
+	"qiao/ripng"
 )
 
 var LookUpTable struct {
@@ -80,8 +81,8 @@ func ExactQuery(addr protocol.Ipv6Addr, length int) *RouteTableEntry {
 	return nil
 }
 
-func (e *RouteTableEntry) ToRipngEntry(ifIdx int) *RipngRte {
-	rte := &RipngRte{
+func (e *RouteTableEntry) ToRipngEntry(ifIdx int) *ripng.RipngRte {
+	rte := &ripng.RipngRte{
 		Prefix:    e.Ipv6Addr,
 		PrefixLen: uint8(e.Len),
 		Metric:    uint8(e.Metric),
