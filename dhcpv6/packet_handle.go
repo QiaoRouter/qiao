@@ -2,6 +2,7 @@ package dhcpv6
 
 import (
 	"fmt"
+	"log"
 	dhcpv6 "qiao/dhcpv6/protocol"
 	"qiao/hal"
 	"qiao/protocol"
@@ -59,6 +60,8 @@ func (e *Engine) HandleIpv6(h *hal.IfHandle, dgrm *protocol.Ipv6Datagram, ether 
 			// 解析出来两个 Option 包裹
 			clientIdPacket, IaNaPacket, _ := ParseDhcpOptions(dhcp.MessageBody)
 
+			// 构造响应对方的 ipv6 报文
+
 			return
 		}
 		if dgrm.Header.NextHeader == protocol.IPProtocolICMPV6 {
@@ -85,8 +88,12 @@ func ParseDhcpOptions(buf protocol.Buffer) (*dhcpv6.OptionClientId, *dhcpv6.Opti
 	flagClientIdentifier, flagIaNa := false, false
 	clientIdentifier, iaNa := &dhcpv6.OptionClientId{}, &dhcpv6.OptionIaNa{}
 
-	// 专门儿照着两个
+	// 专门儿找这两个
+	i := 1
 	for !flagClientIdentifier || !flagIaNa {
+		fmt.Printf("目前是第 %v 个\n", i)
+		i++
+
 		// 先拿出来编号看看
 		optionCode, _ := parser.ParseU16()
 		if optionCode == DHCP_OPTION_CLIENTID {
@@ -94,7 +101,7 @@ func ParseDhcpOptions(buf protocol.Buffer) (*dhcpv6.OptionClientId, *dhcpv6.Opti
 
 			// 获取 client id 完整数据
 			clientIdentifier.Header.OptionCode = optionCode
-			clientIdentifier, _ = ParseClientId(&parser)
+			ParseClientId(&parser, clientIdentifier)
 
 			flagClientIdentifier = true
 		} else if optionCode == DHCP_OPTION_IA_NA {
@@ -102,10 +109,11 @@ func ParseDhcpOptions(buf protocol.Buffer) (*dhcpv6.OptionClientId, *dhcpv6.Opti
 
 			// 获取 client id 完整数据
 			iaNa.Header.OptionCode = optionCode
-			iaNa, _ = ParseIaNa(&parser)
+			ParseIaNa(&parser, iaNa)
 
 			flagIaNa = true
 		} else {
+			// 跳过非目标 option
 			ParseGargabe(&parser)
 		}
 	}
@@ -113,16 +121,33 @@ func ParseDhcpOptions(buf protocol.Buffer) (*dhcpv6.OptionClientId, *dhcpv6.Opti
 	return clientIdentifier, iaNa, nil
 }
 
-func ParseClientId(parser *protocol.NetParser) (*dhcpv6.OptionClientId, error) {
+func ParseClientId(parser *protocol.NetParser, clientIdentifier *dhcpv6.OptionClientId) {
+	// 解析长度
+	clientIdentifier.Header.OptionLen, _ = parser.ParseU16()
 
+	// 解析 uuid
+	log.Printf("formor length of uuid: %v\n", len(clientIdentifier.DUID))
+	clientIdentifier.DUID, _ = parser.ParseNBytes(int(clientIdentifier.Header.OptionLen))
+	log.Printf("current length of uuid after appending: %v\n", len(clientIdentifier.DUID))
 }
 
-func ParseIaNa(parser *protocol.NetParser) (*dhcpv6.OptionIaNa, error) {
+func ParseIaNa(parser *protocol.NetParser, iaNa *dhcpv6.OptionIaNa) {
+	// 解析长度
+	iaNa.Header.OptionLen, _ = parser.ParseU16()
 
+	// 解析 IA-ID
+	iaNa.IaId, _ = parser.ParseU32()
+
+	// 跳过
+	// skip T1, T2, IA_NA Options
+	// len = IAID + T1 + T2 + IANA Option
+	// skip size = len - IAID (already resolved)
+	_ = parser.ParseSkipNBytes(int(iaNa.Header.OptionLen - 4))
 }
 
 func ParseGargabe(parser *protocol.NetParser) {
-
+	optionLen, _ := parser.ParseU16()
+	_ = parser.ParseSkipNBytes(int(optionLen))
 }
 
 // 解析 dhcpv6 报文头部

@@ -49,6 +49,25 @@ func (p *NetParser) ParseBuffer() (Buffer, error) {
 	return buf, nil
 }
 
+// for parsing DUID (variable length)
+func (p *NetParser) ParseNBytes(N int) ([]byte, error) {
+	if p.Pointer+N > int(p.Buffer.Length()) {
+		return nil, ParseErr
+	}
+	byteStream := p.Buffer.Octet[p.Pointer : p.Pointer+N]
+	p.Pointer += N
+	return byteStream, nil
+}
+
+// for dhcp options except of "client id" and "iana"
+func (p *NetParser) ParseSkipNBytes(N int) error {
+	if p.Pointer+N > int(p.Buffer.Length()) {
+		return ParseErr
+	}
+	p.Pointer += N
+	return nil
+}
+
 func (p *NetParser) ParseU8() (uint8, error) {
 	if p.Pointer+1 > int(p.Buffer.Length()) {
 		return 0, ParseErr
