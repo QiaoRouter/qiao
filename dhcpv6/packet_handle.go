@@ -211,12 +211,12 @@ func ParseIaNa(parser *protocol.NetParser, iaNa *dhcpv6.OptionIaNa) {
 	// skip T1, T2, IA_NA Options
 	// len = IAID + T1 + T2 + IANA Option
 	// skip size = len - IAID (already resolved)
-	_ = parser.ParseSkipNBytes(int(iaNa.Header.OptionLen - 4))
+	_, _ = parser.ParseNBytes(int(iaNa.Header.OptionLen - 4))
 }
 
 func ParseGargabe(parser *protocol.NetParser) {
 	optionLen, _ := parser.ParseU16()
-	_ = parser.ParseSkipNBytes(int(optionLen))
+	_, _ = parser.ParseNBytes(int(optionLen))
 }
 
 // 解析 dhcpv6 报文头部
