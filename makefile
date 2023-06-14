@@ -7,7 +7,7 @@ run:
 	go build && python3 typo.py
 
 dhcp:
-	go build && echo hello
+	go build && python3 typo_dhcpv6.py
 
 test:
 	cd hal && go test
