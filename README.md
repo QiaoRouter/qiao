@@ -27,6 +27,15 @@ make run
 执行make run之后，出现mininet>
 可以与之交互。
 
+### 使用go1.18以上的环境
+ubuntu如果用apt install go安装的话，默认版本是1.13。
+可以使用gvm来对go版本进行管理:https://github.com/moovweb/gvm
+```
+bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
+source /root/.gvm/scripts/gvm
+gvm use go1.18
+```
+
 ### 关于typo.py
 在typo.py里，我们给出了两个主机和三个路由器：
 ```
