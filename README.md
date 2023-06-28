@@ -7,6 +7,7 @@
 1. 迁移到 vmware ubuntu 成功
 2. make build && make run 成功
 > mininet h1 ping h2 成功
+> 
 > mininet h2 ping h1 成功
 3. 创建新分支 dhcpv6
 4. 尝试只 merge 某个文件
