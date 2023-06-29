@@ -2,6 +2,7 @@ from ipmininet.iptopo import IPTopo
 from ipmininet.ipnet import IPNet
 from ipmininet.cli import IPCLI
 import os
+import time
 
 N = 100  # number of hosts on each side of the network
 
@@ -53,6 +54,10 @@ if __name__ == "__main__":
     net['r3'].cmd('nohup ./qiao &')
     try:
         net.start()
+        time.sleep(5)  # wait for network to start
+        for i in range(N):
+            net[f'h1_{i}'].cmd('ping h2_{}'.format(i))
+            net[f'h2_{i}'].cmd('ping h1_{}'.format(i))
         IPCLI(net)
     finally:
         net.stop()
