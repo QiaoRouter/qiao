@@ -15,5 +15,8 @@ run-r1:
 run-r3:
 	bird6 -c ./setup/ripng/netns/v1/bird-r3.conf -d -s ~/bird-r3.ctl
 
-perf:
-	go build && python3 perf.py
+perf-qiao:
+	go build && python3 perf_qiao.py
+
+perf_bird:
+	python3 perf_bird.py
