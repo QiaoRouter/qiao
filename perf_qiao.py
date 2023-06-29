@@ -56,8 +56,8 @@ if __name__ == "__main__":
         net.start()
         time.sleep(5)  # wait for network to start
         for i in range(N):
-            net[f'h1_{i}'].cmd('ping h2_{}'.format(i))
-            net[f'h2_{i}'].cmd('ping h1_{}'.format(i))
+            net[f'h1_{i}'].cmd('nohup ping h2_{} &'.format(i))
+            net[f'h2_{i}'].cmd('nohup ping h1_{} &'.format(i))
         IPCLI(net)
     finally:
         net.stop()
