@@ -51,9 +51,6 @@ if __name__ == "__main__":
     net['r3'].cmd('ethtool -K r3-eth0 tx off')
     net['r3'].cmd('ethtool -K r3-eth1 tx off')
 
-    net['r1'].cmd('bird')
-    net['r2'].cmd('bird')
-    net['r3'].cmd('bird')
     try:
         net.start()
         IPCLI(net)
