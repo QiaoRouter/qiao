@@ -18,5 +18,5 @@ run-r3:
 perf-qiao:
 	go build && python3 perf_qiao.py
 
-perf_bird:
+perf-bird:
 	python3 perf_bird.py
