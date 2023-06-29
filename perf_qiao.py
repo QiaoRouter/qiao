@@ -40,11 +40,6 @@ if __name__ == "__main__":
         net[f'h2_{i}'].cmd('ip -6 route add default via 2001:3:{}::2'.format(i+1))
         net[f'h2_{i}'].cmd('ethtool -K h2_{}-eth0 tx off'.format(i+1))
 
-        net[f'h1_{i}'].cmd('nohup python3 ping.py h2_{} > record &'.format(i))
-        net[f'h2_{i}'].cmd('nohup python3 ping.py h1_{} > record &'.format(i))
-
-
-
         net['r1'].cmd('ethtool -K r1-eth{} tx off'.format(i+1))
         net['r3'].cmd('ethtool -K r2-eth{} tx off'.format(i+1))
 
