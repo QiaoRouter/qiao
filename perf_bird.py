@@ -51,9 +51,9 @@ if __name__ == "__main__":
     net['r3'].cmd('ethtool -K r3-eth0 tx off')
     net['r3'].cmd('ethtool -K r3-eth1 tx off')
 
-    net['r1'].cmd('nohup bird -c bird-r1.conf -d -s bird-r1.ctl &')
-    net['r2'].cmd('nohup bird -c bird-r2.conf -d -s bird-r2.ctl &')
-    net['r3'].cmd('nohup bird -c bird-r3.conf -d -s bird-r3.ctl &')
+    net['r1'].cmd('bird')
+    net['r2'].cmd('bird')
+    net['r3'].cmd('bird')
     try:
         net.start()
         IPCLI(net)
