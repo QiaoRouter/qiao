@@ -16,8 +16,14 @@ class MyTopology(IPTopo):
             h1 = self.addHost(f'h1_{i}', use_v4=False)
             h2 = self.addHost(f'h2_{i}', use_v4=False)
 
-            self.addLink(h1, r1, params1={"ip": f"2001:1:{i+1}::1/64"})
-            self.addLink(h2, r3, params1={"ip": f"2001:3:{i+1}::1/64"})
+            h1r1 = self.addLink(h1, r1)
+            h2r3 = self.addLink(h2, r3)
+
+            h1r1[h1].addParams(ip=f"2001:1:{i+1}::1/64")
+            h1r1[r1].addParams(ip=f"2001:1:{i+1}::2/64")
+
+            h2r3[h2].addParams(ip=f"2001:3:{i+1}::1/64")
+            h2r3[r3].addParams(ip=f"2001:3:{i+1}::2/64")
 
         self.addLink(r1, r2, params1={"ip": "2001:12::1/64"}, params2={"ip": "2001:12::2/64"})
         self.addLink(r2, r3, params1={"ip": "2001:23::1/64"}, params2={"ip": "2001:23::2/64"})
@@ -34,8 +40,11 @@ if __name__ == "__main__":
         net[f'h2_{i}'].cmd('ip -6 route add default via 2001:3:{}::2'.format(i+1))
         net[f'h2_{i}'].cmd('ethtool -K h2_{}-eth0 tx off'.format(i+1))
 
+        net[f'h1_{i}'].cmd('ping h2_{}'.format(i+1))
+        net[f'h2_{i}'].cmd('ping h1_{}'.format(i+1))
+
         net['r1'].cmd('ethtool -K r1-eth{} tx off'.format(i+1))
-        net['r2'].cmd('ethtool -K r2-eth{} tx off'.format(i+1))
+        net['r3'].cmd('ethtool -K r2-eth{} tx off'.format(i+1))
 
 
     net['r3'].cmd('sysctl -w net.ipv6.conf.all.forwarding=1')
