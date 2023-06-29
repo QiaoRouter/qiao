@@ -54,7 +54,7 @@ if __name__ == "__main__":
     net['r3'].cmd('nohup ./qiao &')
     try:
         net.start()
-        time.sleep(5)  # wait for network to start
+        time.sleep(10)  # wait for network to start
         for i in range(N):
             net[f'h1_{i}'].cmd('nohup ping h2_{} &'.format(i))
             net[f'h2_{i}'].cmd('nohup ping h1_{} &'.format(i))
