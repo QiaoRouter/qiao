@@ -4,7 +4,7 @@ from ipmininet.cli import IPCLI
 import os
 import time
 
-N = 100  # number of hosts on each side of the network
+N = 10  # number of hosts on each side of the network
 
 class MyTopology(IPTopo):
 
